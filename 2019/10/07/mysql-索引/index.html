@@ -7,17 +7,17 @@
   
   <title>mysql_索引 | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询">
+  <meta name="description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的">
 <meta property="og:type" content="article">
 <meta property="og:title" content="mysql_索引">
 <meta property="og:url" content="https://745162202.github.io/2019/10/07/mysql-索引/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询">
+<meta property="og:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-10-07T14:47:51.373Z">
+<meta property="og:updated_time" content="2019-10-07T14:50:17.487Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="mysql_索引">
-<meta name="twitter:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询">
+<meta name="twitter:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -86,7 +86,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h4 id="对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对-数据页结构的文章加深对数据页结构的知识点。"><a href="#对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对-数据页结构的文章加深对数据页结构的知识点。" class="headerlink" title="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。"></a>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。</h4><h3 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h3><table>
+        <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h4 id="对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。"><a href="#对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。" class="headerlink" title="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。"></a>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</h4><h3 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h3><table>
 <thead>
 <tr>
 <th>查询类型</th>
@@ -139,26 +139,17 @@
 </tr>
 </tbody></table>
 <h3 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h3><blockquote>
-<p>type索引类型<br> system&gt;const&gt;eq_ref&gt;ref&gt;range&gt;index&gt;all ，要对 type 进行优化的前提：有索引<br>其中：system,const只是理想情况；实际能达到 ref&gt;range<br>。<strong>隐式转换会导致索引失效！</strong></p>
-</blockquote>
+<p>type索引类型<br> system&gt;const&gt;eq_ref&gt;ref&gt;range&gt;index&gt;all，要对 type 进行优化的前提：有索引<br>其中：system,const 只是理想情况；实际能达到 ref&gt;range<br>。<strong>隐式转换会导致索引失效！</strong></p>
 <ul>
-<li><p>system（忽略）: 只有一条数据的系统表 ；或 衍生表只有一条数据的主查询<br>对表访问方式，表示MySQL在表中找到所需行的方式，又称“访问类型”。</p>
-</li>
-<li><p>ALL：MySQL 将遍历全表以找到匹配的行</p>
-</li>
-<li><p>index: index 与 ALL 区别为 index 类型只遍历索引树</p>
-</li>
-<li><p>range:只检索给定范围的行，使用一个索引来选择行,常见于使用 =, &lt;&gt;, &gt;, &gt;=, &lt;, &lt;=, IS NULL, &lt;=&gt;, BETWEEN, IN()或者like等运算符的查询中。<strong>当范围数据量过大会自动变成 All 或 index</strong></p>
-</li>
-<li><p>ref: <strong>非唯一性索引</strong>，对于每个索引键的查询，返回匹配的所有行（0~多个）</p>
-</li>
-<li><p>eq_ref: 类似 ref，区别就在使用的索引是唯一索引<strong>且必须为not null</strong>，对于每个索引键值，表中只有一条记录匹配，简单来说，就是多表连接中使用 primary key 或者 unique key 作为关联条件</p>
-</li>
-<li><p>const、system: 使用唯一索引或者主键，返回记录一定是1行记录的等值where条件时，通常type是const。其他数据库也叫做唯一索引扫描。，system 是 const 类型的特例，当查询的表只有一行的情况下，使用 system</p>
-</li>
-<li><p>NULL: </p>
-</li>
+<li>ALL：MySQL 将遍历全表以找到匹配的行</li>
+<li>index: index 与 ALL 区别为 index 类型只遍历索引树</li>
+<li>range:只检索给定范围的行，使用一个索引来选择行,常见于使用 =, &lt;&gt;, &gt;, &gt;=, &lt;, &lt;=, IS NULL, &lt;=&gt;, BETWEEN, IN()或者like等运算符的查询中。<strong>当范围数据量过大会自动变成 All 或 index</strong></li>
+<li>ref: <strong>非唯一性索引</strong>，对于每个索引键的查询，返回匹配的所有行（0~多个）</li>
+<li>eq_ref: 类似 ref，区别就在使用的索引是唯一索引<strong>且必须为not null</strong>，对于每个索引键值，表中只有一条记录匹配，简单来说，就是多表连接中使用 primary key 或者 unique key 作为关联条件</li>
+<li>const、system: 使用唯一索引或者主键，返回记录一定是1行记录的等值where条件时，通常type是const。其他数据库也叫做唯一索引扫描。，system 是 const 类型的特例，当查询的表只有一行的情况下，使用 system</li>
+<li>NULL: </li>
 </ul>
+</blockquote>
 <h3 id="Extra字段"><a href="#Extra字段" class="headerlink" title="Extra字段"></a>Extra字段</h3><ul>
 <li>Using index ：表示相应的 select 操作中使用了覆盖索引（Covering Index）</li>
 <li>Using where; Using index ： 索引来检索记录（不需要实际访问表），在此结果集之上通过 where 过滤。</li>
@@ -180,7 +171,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gj5mav000084meghoiu2jt" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gj8e390000tcmev1hgehqt" class="article-share-link">Share</a>
       
       
     </footer>
