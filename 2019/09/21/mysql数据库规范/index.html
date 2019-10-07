@@ -7,17 +7,17 @@
   
   <title>mysql数据库规范 | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。  MySQL数据库1.建表规约  任何字段如果为非负数，必须是 unsigned。 表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。 主键索引名为 pk_字段名；唯一索引名为 u">
+  <meta name="description" content="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。MySQL数据库1.建表规约  任何字段如果为非负数，必须是 unsigned。 表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。 主键索引名为 pk_字段名；唯一索引名为 uk_字">
 <meta property="og:type" content="article">
 <meta property="og:title" content="mysql数据库规范">
 <meta property="og:url" content="https://745162202.github.io/2019/09/21/mysql数据库规范/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。  MySQL数据库1.建表规约  任何字段如果为非负数，必须是 unsigned。 表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。 主键索引名为 pk_字段名；唯一索引名为 u">
+<meta property="og:description" content="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。MySQL数据库1.建表规约  任何字段如果为非负数，必须是 unsigned。 表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。 主键索引名为 pk_字段名；唯一索引名为 uk_字">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-10-07T14:31:12.212Z">
+<meta property="og:updated_time" content="2019-10-07T14:51:35.675Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="mysql数据库规范">
-<meta name="twitter:description" content="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。  MySQL数据库1.建表规约  任何字段如果为非负数，必须是 unsigned。 表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。 主键索引名为 pk_字段名；唯一索引名为 u">
+<meta name="twitter:description" content="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。MySQL数据库1.建表规约  任何字段如果为非负数，必须是 unsigned。 表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。 主键索引名为 pk_字段名；唯一索引名为 uk_字">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -86,10 +86,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <blockquote>
-<p>在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。</p>
-</blockquote>
-<h2 id="MySQL数据库"><a href="#MySQL数据库" class="headerlink" title="MySQL数据库"></a>MySQL数据库</h2><p><strong>1.建表规约</strong></p>
+        <h4 id="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。"><a href="#在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。" class="headerlink" title="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。"></a>在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。</h4><h2 id="MySQL数据库"><a href="#MySQL数据库" class="headerlink" title="MySQL数据库"></a>MySQL数据库</h2><p><strong>1.建表规约</strong></p>
 <ul>
 <li>任何字段如果为非负数，必须是 unsigned。</li>
 <li>表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。</li>
@@ -135,7 +132,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck1gj8e3n0001tcmerj23yei9" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck1gja0i50002qsmesl47i2pp" class="article-share-link">Share</a>
       
       
     </footer>
