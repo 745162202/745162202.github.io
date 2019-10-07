@@ -7,17 +7,17 @@
   
   <title>mysql_索引 | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="索引select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的UNION中第二或更后面的查询   UNION RESULT UNION语句的结果集   SUBQUERY 子查询中的第一个查询   DEPENDE">
+  <meta name="description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询">
 <meta property="og:type" content="article">
 <meta property="og:title" content="mysql_索引">
 <meta property="og:url" content="https://745162202.github.io/2019/10/07/mysql-索引/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="索引select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的UNION中第二或更后面的查询   UNION RESULT UNION语句的结果集   SUBQUERY 子查询中的第一个查询   DEPENDE">
+<meta property="og:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-10-07T12:27:48.959Z">
+<meta property="og:updated_time" content="2019-10-07T14:47:51.373Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="mysql_索引">
-<meta name="twitter:description" content="索引select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的UNION中第二或更后面的查询   UNION RESULT UNION语句的结果集   SUBQUERY 子查询中的第一个查询   DEPENDE">
+<meta name="twitter:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -86,7 +86,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h3><table>
+        <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h4 id="对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对-数据页结构的文章加深对数据页结构的知识点。"><a href="#对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对-数据页结构的文章加深对数据页结构的知识点。" class="headerlink" title="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。"></a>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对 数据页结构的文章加深对数据页结构的知识点。</h4><h3 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h3><table>
 <thead>
 <tr>
 <th>查询类型</th>
@@ -180,7 +180,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gijx8l000098mey63agzit" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gj5mav000084meghoiu2jt" class="article-share-link">Share</a>
       
       
     </footer>
