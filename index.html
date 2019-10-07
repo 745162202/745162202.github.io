@@ -84,7 +84,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h4 id="对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。"><a href="#对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。" class="headerlink" title="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。"></a>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</h4><h3 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h3><table>
+        <p>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</p>
+<h2 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h2><table>
 <thead>
 <tr>
 <th>查询类型</th>
@@ -136,7 +137,7 @@
 <td>属于无法缓存的子查询的UNION的第二或更后面的查询</td>
 </tr>
 </tbody></table>
-<h3 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h3><blockquote>
+<h2 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h2><blockquote>
 <p>type索引类型<br> system&gt;const&gt;eq_ref&gt;ref&gt;range&gt;index&gt;all，要对 type 进行优化的前提：有索引<br>其中：system,const 只是理想情况；实际能达到 ref&gt;range<br>。<strong>隐式转换会导致索引失效！</strong></p>
 <ul>
 <li>ALL：MySQL 将遍历全表以找到匹配的行</li>
@@ -148,7 +149,7 @@
 <li>NULL: </li>
 </ul>
 </blockquote>
-<h3 id="Extra字段"><a href="#Extra字段" class="headerlink" title="Extra字段"></a>Extra字段</h3><ul>
+<h2 id="Extra字段"><a href="#Extra字段" class="headerlink" title="Extra字段"></a>Extra字段</h2><ul>
 <li>Using index ：表示相应的 select 操作中使用了覆盖索引（Covering Index）</li>
 <li>Using where; Using index ： 索引来检索记录（不需要实际访问表），在此结果集之上通过 where 过滤。</li>
 <li>Using index condition ： 条件包含索引和未索引的列，优化器将首先解析索引的列，通过索引获取数据行再查找其他条件的行(5.6后出现)</li>
@@ -157,7 +158,7 @@
 <li>Using join buffer：标示 Mysql 引擎使用了 连接缓存。</li>
 <li>NULL: </li>
 </ul>
-<h3 id="复合索引"><a href="#复合索引" class="headerlink" title="复合索引"></a>复合索引</h3><ul>
+<h2 id="复合索引"><a href="#复合索引" class="headerlink" title="复合索引"></a>复合索引</h2><ul>
 <li>最好全值匹配</li>
 <li>最左前缀法则</li>
 <li>不在索引列上做任何操作「计算，函数，类型转换（显示、隐式）」</li>
@@ -169,7 +170,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gja0hq0000qsmeryy66a4w" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gje2ge0000b0menx6mocb8" class="article-share-link">Share</a>
       
       
     </footer>
@@ -201,7 +202,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h4 id="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。"><a href="#在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。" class="headerlink" title="在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。"></a>在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。</h4><h2 id="MySQL数据库"><a href="#MySQL数据库" class="headerlink" title="MySQL数据库"></a>MySQL数据库</h2><p><strong>1.建表规约</strong></p>
+        <p>在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。</p>
+<h2 id="MySQL数据库"><a href="#MySQL数据库" class="headerlink" title="MySQL数据库"></a>MySQL数据库</h2><p><strong>1.建表规约</strong></p>
 <ul>
 <li>任何字段如果为非负数，必须是 unsigned。</li>
 <li>表名、字段名必须使用小写字母，数据库字段名的修改代价很大，所以字段名称需要慎重考虑。</li>
@@ -247,7 +249,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck1gja0i50002qsmesl47i2pp" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck1gje2gm0001b0me0gspswf1" class="article-share-link">Share</a>
       
       
     </footer>
@@ -279,8 +281,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h4 id="每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。"><a href="#每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。" class="headerlink" title="每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。"></a>每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。</h4><p><strong>写程序读的代码简单，写人读的代码难</strong></p>
-<h3 id="方法函数命名原则"><a href="#方法函数命名原则" class="headerlink" title="方法函数命名原则"></a>方法函数命名原则</h3><ul>
+        <p>每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。<br><strong>写程序读的代码简单，写人读的代码难</strong></p>
+<h2 id="方法函数命名原则"><a href="#方法函数命名原则" class="headerlink" title="方法函数命名原则"></a>方法函数命名原则</h2><ul>
 <li>方法函数名以小写字母开头，方法函数名由多个单词组成时，除第一个单词首字母小写，其他单词首字母大写然后连接</li>
 <li>方法函数名中禁止出现拼音和英文单词的组合，更不允许出现汉字，不推荐拼音来命名</li>
 <li>方法函数名要浅显易懂，达到望文生义的效果</li>
@@ -312,7 +314,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck1gja0i10001qsme2cggzms8" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck1gje2hc0002b0me9cnmaooz" class="article-share-link">Share</a>
       
       
     </footer>

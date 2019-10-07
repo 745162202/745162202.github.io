@@ -7,17 +7,17 @@
   
   <title>mysql_索引 | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的">
+  <meta name="description" content="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。 select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的U">
 <meta property="og:type" content="article">
 <meta property="og:title" content="mysql_索引">
 <meta property="og:url" content="https://745162202.github.io/2019/10/07/mysql-索引/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的">
+<meta property="og:description" content="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。 select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的U">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-10-07T14:51:34.535Z">
+<meta property="og:updated_time" content="2019-10-07T14:56:08.816Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="mysql_索引">
-<meta name="twitter:description" content="索引对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的">
+<meta name="twitter:description" content="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。 select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的U">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -86,7 +86,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h4 id="对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。"><a href="#对-mysql索引和-数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。" class="headerlink" title="对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。"></a>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</h4><h3 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h3><table>
+        <p>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</p>
+<h2 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h2><table>
 <thead>
 <tr>
 <th>查询类型</th>
@@ -138,7 +139,7 @@
 <td>属于无法缓存的子查询的UNION的第二或更后面的查询</td>
 </tr>
 </tbody></table>
-<h3 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h3><blockquote>
+<h2 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h2><blockquote>
 <p>type索引类型<br> system&gt;const&gt;eq_ref&gt;ref&gt;range&gt;index&gt;all，要对 type 进行优化的前提：有索引<br>其中：system,const 只是理想情况；实际能达到 ref&gt;range<br>。<strong>隐式转换会导致索引失效！</strong></p>
 <ul>
 <li>ALL：MySQL 将遍历全表以找到匹配的行</li>
@@ -150,7 +151,7 @@
 <li>NULL: </li>
 </ul>
 </blockquote>
-<h3 id="Extra字段"><a href="#Extra字段" class="headerlink" title="Extra字段"></a>Extra字段</h3><ul>
+<h2 id="Extra字段"><a href="#Extra字段" class="headerlink" title="Extra字段"></a>Extra字段</h2><ul>
 <li>Using index ：表示相应的 select 操作中使用了覆盖索引（Covering Index）</li>
 <li>Using where; Using index ： 索引来检索记录（不需要实际访问表），在此结果集之上通过 where 过滤。</li>
 <li>Using index condition ： 条件包含索引和未索引的列，优化器将首先解析索引的列，通过索引获取数据行再查找其他条件的行(5.6后出现)</li>
@@ -159,7 +160,7 @@
 <li>Using join buffer：标示 Mysql 引擎使用了 连接缓存。</li>
 <li>NULL: </li>
 </ul>
-<h3 id="复合索引"><a href="#复合索引" class="headerlink" title="复合索引"></a>复合索引</h3><ul>
+<h2 id="复合索引"><a href="#复合索引" class="headerlink" title="复合索引"></a>复合索引</h2><ul>
 <li>最好全值匹配</li>
 <li>最左前缀法则</li>
 <li>不在索引列上做任何操作「计算，函数，类型转换（显示、隐式）」</li>
@@ -171,7 +172,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gja0hq0000qsmeryy66a4w" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck1gje2ge0000b0menx6mocb8" class="article-share-link">Share</a>
       
       
     </footer>
