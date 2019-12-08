@@ -88,7 +88,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck3swxs0w0003jomesc2s4hz2" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck3x7gs3z0004x0meya4hmf9r" class="article-share-link">Share</a>
       
       
     </footer>
@@ -98,9 +98,9 @@
 
 
   
-    <article id="post-mysql页概念" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-InnoDB索引" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2019/12/04/mysql页概念/" class="article-date">
+    <a href="/2019/12/04/InnoDB索引/" class="article-date">
   <time datetime="2019-12-04T09:30:19.000Z" itemprop="datePublished">2019-12-04</time>
 </a>
     
@@ -112,7 +112,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/12/04/mysql页概念/">haha</a>
+      <a class="article-title" href="/2019/12/04/InnoDB索引/">InnoDB索引</a>
     </h1>
   
 
@@ -125,7 +125,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/04/mysql页概念/" data-id="ck3swxs0n0002jomex8p6p7rp" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/04/InnoDB索引/" data-id="ck3x7gs2l0000x0me7rdgewil" class="article-share-link">Share</a>
       
       
     </footer>
@@ -135,9 +135,9 @@
 
 
   
-    <article id="post-haha1" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-InnoDB页" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2019/11/23/haha1/" class="article-date">
+    <a href="/2019/11/23/InnoDB页/" class="article-date">
   <time datetime="2019-11-22T16:25:06.000Z" itemprop="datePublished">2019-11-23</time>
 </a>
     
@@ -149,7 +149,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/11/23/haha1/">haha1</a>
+      <a class="article-title" href="/2019/11/23/InnoDB页/">InnoDB页</a>
     </h1>
   
 
@@ -157,11 +157,65 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h2 id="数据页"><a href="#数据页" class="headerlink" title="数据页"></a>数据页</h2><p>数据页和数据页之间是双向列表链接。每个页中有 page Directory 有一个个槽（slot） 用来二分快速查找数据。  </p>
+<p>如：<br>假设10个槽 将第四个槽拿出来比较，大了就去5-9槽中继续二分，小了就去0-4中继续二分。<br>找到对应的槽后通过单链表一个一个比较，每个槽后面最多八条记录</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>中文名</th>
+<th>占用空间大小</th>
+<th>简单描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>File Header</td>
+<td>文件头部</td>
+<td>38字节</td>
+<td>页的一些通用信息</td>
+</tr>
+<tr>
+<td>Page Header</td>
+<td>页面头部</td>
+<td>56字节</td>
+<td>数据页专有的一些信息</td>
+</tr>
+<tr>
+<td>Infimum + Supremum</td>
+<td>最小记录和最大记录</td>
+<td>26字节</td>
+<td>两个虚拟的行记录</td>
+</tr>
+<tr>
+<td>User Records</td>
+<td>用户记录</td>
+<td>不确定</td>
+<td>实际存储的行记录内容</td>
+</tr>
+<tr>
+<td>Free Space</td>
+<td>空闲空间</td>
+<td>不确定</td>
+<td>页中尚未使用的空间</td>
+</tr>
+<tr>
+<td>Page Directory</td>
+<td>页面目录</td>
+<td>不确定</td>
+<td>页中的某些记录的相对位置</td>
+</tr>
+<tr>
+<td>File Trailer</td>
+<td>文件尾部</td>
+<td>8字节</td>
+<td>校验页是否完整</td>
+</tr>
+</tbody></table>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/23/haha1/" data-id="ck3swxs0j0001jome9ncjl1jk" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/11/23/InnoDB页/" data-id="ck3x7gs3v0002x0mem9j958mn" class="article-share-link">Share</a>
       
       
     </footer>
@@ -171,9 +225,9 @@
 
 
   
-    <article id="post-haha" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-InnoDB 行格式 " class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2019/11/22/haha/" class="article-date">
+    <a href="/2019/11/22/InnoDB 行格式 /" class="article-date">
   <time datetime="2019-11-22T15:18:17.000Z" itemprop="datePublished">2019-11-22</time>
 </a>
     
@@ -185,7 +239,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/11/22/haha/">haha</a>
+      <a class="article-title" href="/2019/11/22/InnoDB 行格式 /">InnoDB 行格式</a>
     </h1>
   
 
@@ -193,11 +247,102 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h2 id="InnoDB-行格式"><a href="#InnoDB-行格式" class="headerlink" title="InnoDB 行格式"></a>InnoDB 行格式</h2><h3 id="InnoDB-读取数据的方式"><a href="#InnoDB-读取数据的方式" class="headerlink" title="InnoDB 读取数据的方式"></a>InnoDB 读取数据的方式</h3><p>将数据划分为若干页，以页作为磁盘和内存之间交互的基本单位，InnoDB中页的大小一般是16KB，当需要从磁盘中读取数据时每一次最少将从磁盘中读取16KB的内容到内存中，每一次最少也会把内存中的16KB内容写到磁盘中。</p>
+<h3 id="行的分类"><a href="#行的分类" class="headerlink" title="行的分类"></a>行的分类</h3><ol>
+<li>Compact:MySQL 5.0时被引入的，其设计目标是能高效存放数据</li>
+<li>Redundant:MySQL 5.0版本之前InnoDB的行记录存储方式</li>
+<li>Dynamic:类似于Compact行格式，只不过在处理行溢出数据时有点分歧</li>
+<li>Compressed:比 Dynamic 多了一个 zlib 算法压缩。对 BLOB、TEXT、VARCHAR 这类大长度类型的数据能进行非常有效的存储<blockquote>
+<p>支持的 Compact 和 Redundant 格式将其称为 Antelope 文件格式，Barracuda 文件格式下拥有两种新的行记录格式 Compressed 和 Dynamic 两种。</p>
+</blockquote>
+<h3 id="行的结构"><a href="#行的结构" class="headerlink" title="行的结构"></a>行的结构</h3></li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>变长字段长度</td>
+<td>使用两个字节存储。列加起来最多 65535 个字节（除了blobs和text 类型的列之外，其他所有列(不包含隐藏列和头部信息)）</td>
+</tr>
+<tr>
+<td>Null标志位</td>
+<td>一位一个二进制位，1 就标示这一列 null</td>
+</tr>
+<tr>
+<td>记录头信息</td>
+<td>见下表</td>
+</tr>
+<tr>
+<td>列数据</td>
+<td>真实数据，还有几个隐藏列。唯一标识 row_id (6 字节)，事务ID transaction_id (6字节)，回滚指针 roll_pointer (7 字节)。</td>
+</tr>
+<tr>
+<td>&gt; 列数据中的唯一标识只有在没有主键的且没有唯一索引的时候才会添加。</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>记录头信息</strong></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>大小（单位：bit）</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>预留位1</td>
+<td>1</td>
+<td>没有使用</td>
+</tr>
+<tr>
+<td>预留位2</td>
+<td>1</td>
+<td>没有使用</td>
+</tr>
+<tr>
+<td>delete_mask</td>
+<td>1</td>
+<td>标记该记录是否被删除</td>
+</tr>
+<tr>
+<td>min_rec_mask</td>
+<td>1</td>
+<td>B+树的每层非叶子节点中的最小记录都会添加该标记</td>
+</tr>
+<tr>
+<td>n_owned</td>
+<td>4</td>
+<td>表示当前记录拥有的记录数</td>
+</tr>
+<tr>
+<td>heap_no</td>
+<td>13</td>
+<td>表示当前记录在记录堆的位置信息</td>
+</tr>
+<tr>
+<td>record_type</td>
+<td>3</td>
+<td>表示当前记录的类型，0表示普通记录，1表示B+树非叶子节点记录，2表示最小记录，3表示最大记录</td>
+</tr>
+<tr>
+<td>next_record</td>
+<td>16</td>
+<td>表示下一条记录的相对位置</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p> 通过 next_record 可以看出行记录时单链表</p>
+</blockquote>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/22/haha/" data-id="ck3swxrzt0000jomeqaf4zcx6" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/11/22/InnoDB 行格式 /" data-id="ck3x7gs3r0001x0medanrg7hy" class="article-share-link">Share</a>
       
       
     </footer>
@@ -315,7 +460,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck3swxs1g0004jomeqlokgh65" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck3x7gs3x0003x0me6xzxrzh3" class="article-share-link">Share</a>
       
       
     </footer>
@@ -394,7 +539,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck3swxs1l0006jome6ffk1e96" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck3x7gs450006x0med44mc6bp" class="article-share-link">Share</a>
       
       
     </footer>
@@ -459,7 +604,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck3swxs1i0005jomep6fz7a9r" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck3x7gs410005x0meahyvb74p" class="article-share-link">Share</a>
       
       
     </footer>
@@ -504,15 +649,15 @@
           </li>
         
           <li>
-            <a href="/2019/12/04/mysql页概念/">haha</a>
+            <a href="/2019/12/04/InnoDB索引/">InnoDB索引</a>
           </li>
         
           <li>
-            <a href="/2019/11/23/haha1/">haha1</a>
+            <a href="/2019/11/23/InnoDB页/">InnoDB页</a>
           </li>
         
           <li>
-            <a href="/2019/11/22/haha/">haha</a>
+            <a href="/2019/11/22/InnoDB 行格式 /">InnoDB 行格式</a>
           </li>
         
           <li>
