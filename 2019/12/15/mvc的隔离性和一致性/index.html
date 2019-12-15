@@ -14,10 +14,12 @@
 <meta property="og:site_name" content="Hexo">
 <meta property="og:description" content="数据库隔离级别 ACID（原子性，一致性，隔离性，持久性） 隔离性 读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。 读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。 可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。 串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-12-15T11:08:08.106Z">
+<meta property="og:image" content="https://745162202.github.io/images/mvc-readview.jpg">
+<meta property="og:updated_time" content="2019-12-15T11:13:06.121Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="mvc的隔离性和一致性">
 <meta name="twitter:description" content="数据库隔离级别 ACID（原子性，一致性，隔离性，持久性） 隔离性 读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。 读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。 可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。 串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“">
+<meta name="twitter:image" content="https://745162202.github.io/images/mvc-readview.jpg">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -127,6 +129,7 @@
 <blockquote>
 <p>事务ID:只有在对表中的记录做改动时（执行INSERT、DELETE、UPDATE这些语句时）才会为事务分配事务id，否则在一个只读事务中的事务id值都默认为0。</p>
 </blockquote>
+<p><img src="/images/mvc-readview.jpg" alt="来源https://www.cnblogs.com/luozhiyun/p/11216287.html"></p>
 <ul>
 <li>判断trx_id 与 creator_trx_id是否相等，是则意味着此版本正在被当前事务操作，可以访问</li>
 <li>判断trx_id是否小于min_trx_id，表示此版本的生成事务已经提交，可以访问</li>
@@ -137,7 +140,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck46wpege0002cwme9iupacjo" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck46wuynd00027ome1k7qnqgb" class="article-share-link">Share</a>
       
       
     </footer>
