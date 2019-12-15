@@ -62,6 +62,89 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-mvc的隔离性和一致性" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/12/15/mvc的隔离性和一致性/" class="article-date">
+  <time datetime="2019-12-15T11:07:09.000Z" itemprop="datePublished">2019-12-15</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/15/mvc的隔离性和一致性/">mvc的隔离性和一致性</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>数据库隔离级别 ACID（原子性，一致性，隔离性，持久性）</strong></p>
+<h3 id="隔离性"><a href="#隔离性" class="headerlink" title="隔离性"></a>隔离性</h3><ul>
+<li>读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。</li>
+<li>读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。</li>
+<li>可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。</li>
+<li>串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。</li>
+</ul>
+<h4 id="事务隔离的实现"><a href="#事务隔离的实现" class="headerlink" title="事务隔离的实现"></a>事务隔离的实现</h4><p>mysql 默认事务隔离级别「可重复读」，在开启事务会有不同的read-view，同一条记录在系统中可以存在多个版本，就是数据库的多版本并发控制（MVCC）。MVCC 可以解决帮助 REPEATABLE-READ（可重复读）的幻读问题，因为他在开启事务的时候就生成视图（readView）</p>
+<h3 id="一致性-ReadView"><a href="#一致性-ReadView" class="headerlink" title="一致性,ReadView"></a>一致性,ReadView</h3><p>在InnoDB引擎表中，它的聚簇索引记录中有两个必要的隐藏列：</p>
+<ul>
+<li>trx_id这个id用来存储的每次对某条聚簇索引记录进行修改的时候的事务id。</li>
+<li>roll_pointer每次对哪条聚簇索引记录有修改的时候，都会把老版本写入undo日- 志中。这个roll_pointer就是存了一个指针，它指向这条聚簇索引记录的上一个版本的位置，通过它来获得上一个版本的记录信息。</li>
+</ul>
+<p>readview 在 undo 日志中，readview 结构：</p>
+<table>
+<thead>
+<tr>
+<th>结构</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>m_ids</td>
+<td>存放当前系统中活跃的事务集合</td>
+</tr>
+<tr>
+<td>min_trx_id</td>
+<td>m_ids中最小的事务ID</td>
+</tr>
+<tr>
+<td>max_trx_id</td>
+<td>分配给下一个开启事务的事务ID</td>
+</tr>
+<tr>
+<td>creator_trx_id</td>
+<td>创建此ReadView的事务ID</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>事务ID:只有在对表中的记录做改动时（执行INSERT、DELETE、UPDATE这些语句时）才会为事务分配事务id，否则在一个只读事务中的事务id值都默认为0。</p>
+</blockquote>
+<ul>
+<li>判断trx_id 与 creator_trx_id是否相等，是则意味着此版本正在被当前事务操作，可以访问</li>
+<li>判断trx_id是否小于min_trx_id，表示此版本的生成事务已经提交，可以访问</li>
+<li>判断trx_id是否大于等于max_trx_id，表示此版本的生成事务已经提交，可以访问</li>
+<li>判断trx_id是否在m_ids中，若不在，则意味着此版本的创建事务已经提交，可以访问；若在，则表明此版本在创建ReadView时还在活动，不能访问。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck46wpege0002cwme9iupacjo" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-框架的事务嵌套" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2019/12/06/框架的事务嵌套/" class="article-date">
@@ -88,7 +171,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck3x7ukyd0006p8mer7mfojss" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck46wpegx0006cwmeud6uwlyp" class="article-share-link">Share</a>
       
       
     </footer>
@@ -125,7 +208,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/04/InnoDB索引/" data-id="ck3x7ukxy0001p8mejxfsuajp" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/04/InnoDB索引/" data-id="ck46wpega0001cwme954jbdf1" class="article-share-link">Share</a>
       
       
     </footer>
@@ -215,7 +298,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/23/InnoDB页/" data-id="ck3x7uky20002p8megqic7hse" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/11/23/InnoDB页/" data-id="ck46wpegq0004cwmel7dx7anc" class="article-share-link">Share</a>
       
       
     </footer>
@@ -341,7 +424,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/22/InnoDB 行格式 /" data-id="ck3x7ukxl0000p8me375s6a0r" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/11/22/InnoDB 行格式 /" data-id="ck46wpeek0000cwme91cekr70" class="article-share-link">Share</a>
       
       
     </footer>
@@ -459,7 +542,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck3x7uky60003p8memkl7bnc4" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck46wpegl0003cwme8nrg8tmc" class="article-share-link">Share</a>
       
       
     </footer>
@@ -538,7 +621,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck3x7uky90004p8me1u2jz4a9" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck46wpegt0005cwmeagl6l057" class="article-share-link">Share</a>
       
       
     </footer>
@@ -603,7 +686,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck3x7ukyb0005p8me7nljh5kr" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck46wpeh00007cwmeren7ly7j" class="article-share-link">Share</a>
       
       
     </footer>
@@ -644,6 +727,10 @@
       <ul>
         
           <li>
+            <a href="/2019/12/15/mvc的隔离性和一致性/">mvc的隔离性和一致性</a>
+          </li>
+        
+          <li>
             <a href="/2019/12/06/框架的事务嵌套/">框架的事务嵌套</a>
           </li>
         
@@ -657,10 +744,6 @@
         
           <li>
             <a href="/2019/11/22/InnoDB 行格式 /">InnoDB 行格式</a>
-          </li>
-        
-          <li>
-            <a href="/2019/10/07/mysql-索引/">mysql_索引</a>
           </li>
         
       </ul>

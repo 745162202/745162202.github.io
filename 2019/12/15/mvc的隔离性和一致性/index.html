@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>mvc的隔离性和一致性 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="数据库隔离级别 ACID（原子性，一致性，隔离性，持久性） 隔离性 读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。 读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。 可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。 串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mvc的隔离性和一致性">
+<meta property="og:url" content="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="数据库隔离级别 ACID（原子性，一致性，隔离性，持久性） 隔离性 读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。 读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。 可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。 串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-12-15T11:08:08.106Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mvc的隔离性和一致性">
+<meta name="twitter:description" content="数据库隔离级别 ACID（原子性，一致性，隔离性，持久性） 隔离性 读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。 读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。 可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。 串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://745162202.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-mvc的隔离性和一致性" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/12/15/mvc的隔离性和一致性/" class="article-date">
+  <time datetime="2019-12-15T11:07:09.000Z" itemprop="datePublished">2019-12-15</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      mvc的隔离性和一致性
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>数据库隔离级别 ACID（原子性，一致性，隔离性，持久性）</strong></p>
+<h3 id="隔离性"><a href="#隔离性" class="headerlink" title="隔离性"></a>隔离性</h3><ul>
+<li>读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。</li>
+<li>读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。</li>
+<li>可重复读是指，一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的。</li>
+<li>串行化，顾名思义是对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。</li>
+</ul>
+<h4 id="事务隔离的实现"><a href="#事务隔离的实现" class="headerlink" title="事务隔离的实现"></a>事务隔离的实现</h4><p>mysql 默认事务隔离级别「可重复读」，在开启事务会有不同的read-view，同一条记录在系统中可以存在多个版本，就是数据库的多版本并发控制（MVCC）。MVCC 可以解决帮助 REPEATABLE-READ（可重复读）的幻读问题，因为他在开启事务的时候就生成视图（readView）</p>
+<h3 id="一致性-ReadView"><a href="#一致性-ReadView" class="headerlink" title="一致性,ReadView"></a>一致性,ReadView</h3><p>在InnoDB引擎表中，它的聚簇索引记录中有两个必要的隐藏列：</p>
+<ul>
+<li>trx_id这个id用来存储的每次对某条聚簇索引记录进行修改的时候的事务id。</li>
+<li>roll_pointer每次对哪条聚簇索引记录有修改的时候，都会把老版本写入undo日- 志中。这个roll_pointer就是存了一个指针，它指向这条聚簇索引记录的上一个版本的位置，通过它来获得上一个版本的记录信息。</li>
+</ul>
+<p>readview 在 undo 日志中，readview 结构：</p>
+<table>
+<thead>
+<tr>
+<th>结构</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>m_ids</td>
+<td>存放当前系统中活跃的事务集合</td>
+</tr>
+<tr>
+<td>min_trx_id</td>
+<td>m_ids中最小的事务ID</td>
+</tr>
+<tr>
+<td>max_trx_id</td>
+<td>分配给下一个开启事务的事务ID</td>
+</tr>
+<tr>
+<td>creator_trx_id</td>
+<td>创建此ReadView的事务ID</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>事务ID:只有在对表中的记录做改动时（执行INSERT、DELETE、UPDATE这些语句时）才会为事务分配事务id，否则在一个只读事务中的事务id值都默认为0。</p>
+</blockquote>
+<ul>
+<li>判断trx_id 与 creator_trx_id是否相等，是则意味着此版本正在被当前事务操作，可以访问</li>
+<li>判断trx_id是否小于min_trx_id，表示此版本的生成事务已经提交，可以访问</li>
+<li>判断trx_id是否大于等于max_trx_id，表示此版本的生成事务已经提交，可以访问</li>
+<li>判断trx_id是否在m_ids中，若不在，则意味着此版本的创建事务已经提交，可以访问；若在，则表明此版本在创建ReadView时还在活动，不能访问。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck46wpege0002cwme9iupacjo" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/12/06/框架的事务嵌套/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">框架的事务嵌套</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">December 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">November 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/12/15/mvc的隔离性和一致性/">mvc的隔离性和一致性</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/06/框架的事务嵌套/">框架的事务嵌套</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/04/InnoDB索引/">InnoDB索引</a>
+          </li>
+        
+          <li>
+            <a href="/2019/11/23/InnoDB页/">InnoDB页</a>
+          </li>
+        
+          <li>
+            <a href="/2019/11/22/InnoDB 行格式 /">InnoDB 行格式</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
