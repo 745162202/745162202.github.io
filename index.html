@@ -88,20 +88,21 @@
 <h2 id="以前遇到过的问题"><a href="#以前遇到过的问题" class="headerlink" title="以前遇到过的问题"></a>以前遇到过的问题</h2><p>foreache 循环引用的变量，在最后一次循环中 数据最后一个有问题。 代码如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$arr = [1,2,3];</span><br><span class="line"></span><br><span class="line">foreach ($arr as $k =&gt; &amp;$v) &#123;</span><br><span class="line">	echo $v;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">foreach($arr as $k =&gt; $v) &#123;</span><br><span class="line">	echo $v;</span><br><span class="line">&#125;</span><br><span class="line">执行结果会是 123122</span><br></pre></td></tr></table></figure>
 
-<p>因为第一次循环的最后一个 $v 引用了 $arr[2],而后面的循环只是循环修改 $v 也就是 $arr[2]。<br>解决方案 unset($v)或者第二个循环换一个变量名称。</p>
+<p>因为第一次循环的最后一个 $v 引用了 $arr[2],而后面的循环只是循环修改 $v 也就是 $arr[2]。<br><strong>解决方案 unset($v)或者第二个循环换一个变量名称。</strong></p>
 <h2 id="本次遇到-foreache-循环问题"><a href="#本次遇到-foreache-循环问题" class="headerlink" title="本次遇到 foreache 循环问题"></a>本次遇到 foreache 循环问题</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 延迟预载入关联查询</span><br><span class="line"> * @access public</span><br><span class="line"> * @param mixed $relation 关联</span><br><span class="line"> * @return $this</span><br><span class="line"> */</span><br><span class="line">public function load($relation)</span><br><span class="line">&#123;</span><br><span class="line">    if (!$this-&gt;isEmpty()) &#123;</span><br><span class="line">        $item = current($this-&gt;items);</span><br><span class="line">        $item-&gt;eagerlyResultSet($this-&gt;items, $relation);</span><br><span class="line">    &#125;</span><br><span class="line">    return $this;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>eagerlyResultSet 对 $this-&gt;items 进行 foreache 循环，那么 load 方法被调用第二次 $item = current($this-&gt;items); 就会返回 false。</p>
+<p>eagerlyResultSet 对 $this-&gt;items 进行 foreache 循环，那么 load 方法被调用第二次 $item = current($this-&gt;items); 就会返回 <strong>false</strong>。</p>
 <p>简化我们的例子：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$arr = [1,2,3];</span><br><span class="line">	</span><br><span class="line">foreach ($arr as $k =&gt; $v) &#123;</span><br><span class="line">	echo $v;</span><br><span class="line">&#125;</span><br><span class="line">var_dump(current($arr)); //返回 false</span><br></pre></td></tr></table></figure></p>
 <p>foreach 读取数据后，指针指向下一个，循环完成后指针就在$a[2]后面一位了。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$arr = [1,2,3];</span><br><span class="line">	</span><br><span class="line">foreach ($arr as $k =&gt; $v) &#123;</span><br><span class="line">	echo $v;</span><br><span class="line">&#125;</span><br><span class="line">$arr[3]=4;</span><br><span class="line">var_dump(current($arr)); //返回 4</span><br></pre></td></tr></table></figure>
 
-<p>所以循环后需要使用 reset 重置数组的内部指针。</p>
+<p>所以循环后需要使用 <strong>reset 重置数组的内部指针</strong>。</p>
+<p>在查询资料过程中对 foreache 有了更多的了解，下次再整理下。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2020/01/11/thinkphp多次load引出foreach的奇怪现象/" data-id="ck59t1xjk0006csmeqbbr0ko3" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2020/01/11/thinkphp多次load引出foreach的奇怪现象/" data-id="ck59t4vam00067omeoaxx1v27" class="article-share-link">Share</a>
       
       
     </footer>
@@ -185,7 +186,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck59t1xjd0003csme315cdkpt" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck59t4vaf00037ome7cqjbrio" class="article-share-link">Share</a>
       
       
     </footer>
@@ -221,7 +222,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck59t1xjo0008csmem0hczefy" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck59t4vaq00087omeolziddab" class="article-share-link">Share</a>
       
       
     </footer>
@@ -258,7 +259,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/04/InnoDB索引/" data-id="ck59t1xjb0002csme11orrbk7" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/12/04/InnoDB索引/" data-id="ck59t4vab00027omeq2qsqzqz" class="article-share-link">Share</a>
       
       
     </footer>
@@ -348,7 +349,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/23/InnoDB页/" data-id="ck59t1xj70001csmect9aivvd" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/11/23/InnoDB页/" data-id="ck59t4va700017omew90h8wcn" class="article-share-link">Share</a>
       
       
     </footer>
@@ -474,7 +475,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/22/InnoDB 行格式 /" data-id="ck59t1xix0000csme1p1v8iev" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/11/22/InnoDB 行格式 /" data-id="ck59t4v9t00007omedryqltmv" class="article-share-link">Share</a>
       
       
     </footer>
@@ -592,7 +593,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck59t1xjg0004csmegzqn88ax" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck59t4vah00047ome3yi1nzl0" class="article-share-link">Share</a>
       
       
     </footer>
@@ -671,7 +672,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck59t1xji0005csmeufrzpm38" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck59t4vaj00057omegsawi1b1" class="article-share-link">Share</a>
       
       
     </footer>
@@ -736,7 +737,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck59t1xjm0007csmemx40ufm0" class="article-share-link">Share</a>
+      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck59t4vao00077ome87lhbb68" class="article-share-link">Share</a>
       
       
     </footer>
