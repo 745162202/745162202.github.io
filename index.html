@@ -1,88 +1,79 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="utf-8">
   
-
-  
   <title>Hexo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Hexo">
-<meta property="og:url" content="https://745162202.github.io/index.html">
-<meta property="og:site_name" content="Hexo">
-<meta property="og:locale" content="en">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hexo">
+
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
-  
-  
-    <link rel="icon" href="/favicon.png">
-  
-  
-    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://745162202.github.io"></form>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="outer">
-        <section id="main">
-  
-    <article id="post-thinkphp多次load引出foreach的奇怪现象" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2020/01/11/thinkphp多次load引出foreach的奇怪现象/" class="article-date">
-  <time datetime="2020-01-11T15:51:48.000Z" itemprop="datePublished">2020-01-11</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/01/11/thinkphp多次load引出foreach的奇怪现象/">thinkphp 多次 load 引出 foreach 的奇怪现象</a>
-    </h1>
+  <meta name="author" content="John Doe">
   
 
-      </header>
+  
+
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="Hexo">
+
+  
+  <meta property="og:image" content="/favicon.ico">
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">Hexo</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
     
-    <div class="article-entry" itemprop="articleBody">
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/01/11/thinkphp多次load引出foreach的奇怪现象/"><span>thinkphp 多次 load 引出 foreach 的奇怪现象</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/01/11/thinkphp多次load引出foreach的奇怪现象/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-01-11T15:51:48.000Z">
+          2020-01-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p>最近开发中使用多个延迟预载入中遇到了数组被 foreache 循环后，current 获取不到信息，以前也有类似的事情。发现自己对 foreach 的理解很片面，<br>借助这次机会搞懂这个 foreache 循环。</p>
 <h2 id="以前遇到过的问题"><a href="#以前遇到过的问题" class="headerlink" title="以前遇到过的问题"></a>以前遇到过的问题</h2><p>foreache 循环引用的变量，在最后一次循环中 数据最后一个有问题。 代码如下：</p>
@@ -101,38 +92,47 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2020/01/11/thinkphp多次load引出foreach的奇怪现象/" data-id="ck59t4vam00067omeoaxx1v27" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-mvc的隔离性和一致性" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/12/15/mvc的隔离性和一致性/" class="article-date">
-  <time datetime="2019-12-15T11:07:09.000Z" itemprop="datePublished">2019-12-15</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/12/15/mvc的隔离性和一致性/"><span>mvc的隔离性和一致性</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/12/15/mvc的隔离性和一致性/">mvc的隔离性和一致性</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/12/15/mvc的隔离性和一致性/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-12-15T11:07:09.000Z">
+          2019-12-15
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p><strong>数据库隔离级别 ACID（原子性，一致性，隔离性，持久性）</strong></p>
 <h3 id="隔离性"><a href="#隔离性" class="headerlink" title="隔离性"></a>隔离性</h3><ul>
@@ -185,111 +185,138 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/15/mvc的隔离性和一致性/" data-id="ck59t4vaf00037ome7cqjbrio" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-框架的事务嵌套" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/12/06/框架的事务嵌套/" class="article-date">
-  <time datetime="2019-12-05T16:05:48.000Z" itemprop="datePublished">2019-12-06</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/12/06/框架的事务嵌套/"><span>框架的事务嵌套</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/12/06/框架的事务嵌套/">框架的事务嵌套</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/12/06/框架的事务嵌套/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-12-05T16:05:48.000Z">
+          2019-12-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/06/框架的事务嵌套/" data-id="ck59t4vaq00087omeolziddab" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-InnoDB索引" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/12/04/InnoDB索引/" class="article-date">
-  <time datetime="2019-12-04T09:30:19.000Z" itemprop="datePublished">2019-12-04</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/12/04/InnoDB索引/"><span>InnoDB索引</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/12/04/InnoDB索引/">InnoDB索引</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/12/04/InnoDB索引/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-12-04T09:30:19.000Z">
+          2019-12-04
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p>mysql 的数据都是存储在页（16kb）中的，索引也是在页中使用哈希数组链接，指向内容是以链表方式链接的</p>
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/12/04/InnoDB索引/" data-id="ck59t4vab00027omeq2qsqzqz" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-InnoDB页" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/11/23/InnoDB页/" class="article-date">
-  <time datetime="2019-11-22T16:25:06.000Z" itemprop="datePublished">2019-11-23</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/11/23/InnoDB页/"><span>InnoDB页</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/11/23/InnoDB页/">InnoDB页</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/11/23/InnoDB页/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-11-22T16:25:06.000Z">
+          2019-11-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p>数据页和数据页之间是双向列表链接。每个页中有 page Directory 有一个个槽（slot） 用来二分快速查找数据。  </p>
 <p>如：<br>假设10个槽 将第四个槽拿出来比较，大了就去5-9槽中继续二分，小了就去0-4中继续二分。<br>找到对应的槽后通过单链表一个一个比较，每个槽后面最多八条记录</p>
@@ -348,38 +375,47 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/23/InnoDB页/" data-id="ck59t4va700017omew90h8wcn" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-InnoDB 行格式 " class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/11/22/InnoDB 行格式 /" class="article-date">
-  <time datetime="2019-11-22T15:18:17.000Z" itemprop="datePublished">2019-11-22</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/11/22/InnoDB 行格式 /"><span>InnoDB 行格式</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/11/22/InnoDB 行格式 /">InnoDB 行格式</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/11/22/InnoDB 行格式 /" rel="bookmark">
+        <time class="entry-date published" datetime="2019-11-22T15:18:17.000Z">
+          2019-11-22
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <h3 id="InnoDB-读取数据的方式"><a href="#InnoDB-读取数据的方式" class="headerlink" title="InnoDB 读取数据的方式"></a>InnoDB 读取数据的方式</h3><p>将数据划分为若干页，以页作为磁盘和内存之间交互的基本单位，InnoDB中页的大小一般是16KB，当需要从磁盘中读取数据时每一次最少将从磁盘中读取16KB的内容到内存中，每一次最少也会把内存中的16KB内容写到磁盘中。</p>
 <h3 id="行的分类"><a href="#行的分类" class="headerlink" title="行的分类"></a>行的分类</h3><ol>
@@ -474,38 +510,47 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/11/22/InnoDB 行格式 /" data-id="ck59t4v9t00007omedryqltmv" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-mysql-索引" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/10/07/mysql-索引/" class="article-date">
-  <time datetime="2019-10-07T12:26:41.000Z" itemprop="datePublished">2019-10-07</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/10/07/mysql-索引/"><span>mysql_索引</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/10/07/mysql-索引/">mysql_索引</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/10/07/mysql-索引/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-10-07T12:26:41.000Z">
+          2019-10-07
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p>对 mysql索引和 数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</p>
 <h2 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h2><table>
@@ -592,38 +637,47 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/10/07/mysql-索引/" data-id="ck59t4vah00047ome3yi1nzl0" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-mysql数据库规范" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/09/21/mysql数据库规范/" class="article-date">
-  <time datetime="2019-09-21T14:25:06.000Z" itemprop="datePublished">2019-09-21</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/09/21/mysql数据库规范/"><span>mysql数据库规范</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/09/21/mysql数据库规范/">mysql数据库规范</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/09/21/mysql数据库规范/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-09-21T14:25:06.000Z">
+          2019-09-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p>在工作中为开发进度忽略一些建表的规范和索引的建立（基本只有主键索引），写下这个约定也是为了约束自己在开发中潜移默化使用有效的索引和规则的数据表。「参考阿里开发手册加自己的一些经验」。</p>
 <h2 id="MySQL数据库"><a href="#MySQL数据库" class="headerlink" title="MySQL数据库"></a>MySQL数据库</h2><p><strong>1.建表规约</strong></p>
@@ -671,38 +725,47 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/21/mysql数据库规范/" data-id="ck59t4vaj00057omegsawi1b1" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
+
+  <article>
+
   
-    <article id="post-增加代码可读性的命名规范" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/09/14/增加代码可读性的命名规范/" class="article-date">
-  <time datetime="2019-09-14T03:04:02.000Z" itemprop="datePublished">2019-09-14</time>
-</a>
     
-  </div>
-  <div class="article-inner">
+    <h3 class="article-title"><a href="/2019/09/14/增加代码可读性的命名规范/"><span>增加代码可读性的命名规范</span></a></h3>
     
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/09/14/增加代码可读性的命名规范/">增加代码可读性的命名规范</a>
-    </h1>
   
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/09/14/增加代码可读性的命名规范/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-09-14T03:04:02.000Z">
+          2019-09-14
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
       
         <p>每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。<br><strong>写程序读的代码简单，写人读的代码难</strong></p>
 <h2 id="方法函数命名原则"><a href="#方法函数命名原则" class="headerlink" title="方法函数命名原则"></a>方法函数命名原则</h2><ul>
@@ -736,105 +799,43 @@
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://745162202.github.io/2019/09/14/增加代码可读性的命名规范/" data-id="ck59t4vao00077ome87lhbb68" class="article-share-link">Share</a>
-      
-      
-    </footer>
+
   </div>
-  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
 </article>
 
 
-  
 
 
-</section>
-        
-          <aside id="sidebar">
+<nav class="pagination">
   
-    
-
-  
-    
-
-  
-    
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">January 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">December 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">November 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2020/01/11/thinkphp多次load引出foreach的奇怪现象/">thinkphp 多次 load 引出 foreach 的奇怪现象</a>
-          </li>
-        
-          <li>
-            <a href="/2019/12/15/mvc的隔离性和一致性/">mvc的隔离性和一致性</a>
-          </li>
-        
-          <li>
-            <a href="/2019/12/06/框架的事务嵌套/">框架的事务嵌套</a>
-          </li>
-        
-          <li>
-            <a href="/2019/12/04/InnoDB索引/">InnoDB索引</a>
-          </li>
-        
-          <li>
-            <a href="/2019/11/23/InnoDB页/">InnoDB页</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      &copy; 2020 John Doe<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
-</footer>
-    </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
   
 </nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
     
-
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-
-
-  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-  <script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-<script src="/js/script.js"></script>
-
-
-
+    &copy; 2020 John Doe
+    
+  </p>
+</footer>
+    
   </div>
+</div>
 </body>
 </html>
