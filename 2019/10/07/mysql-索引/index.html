@@ -27,40 +27,7 @@ PRIMARY
 最外层查询
 
 
-UNION
-UNION 语句中第二或更后面的查询
-
-
-DEPENDENT UNION
-依赖外部查询的UNION中第二或更后面的查询
-
-
-UNION RESULT
-UNION语句的结果集
-
-
-SUBQUERY
-子查询中的第一个查询
-
-
-DEPENDENT SUBQUERY
-依赖外部查询的子查询中的第一个查询
-
-
-DERIVED
-查询的派生表(在FROM从句中的子查询）
-
-
-MATERIALIZED
-物化子查询
-
-
-UNCACHEABLE SUBQUERY
-无法缓存结果的子查询，并且必须为外部查询的每一行重新计算
-
-
-UNCACHEABLE UNION
-属于无法缓存的子查询的UNION的第二或更后面的查询">
+U">
   
 
   
@@ -182,7 +149,6 @@ UNCACHEABLE UNION
 <td>属于无法缓存的子查询的UNION的第二或更后面的查询</td>
 </tr>
 </tbody></table>
-<a id="more"></a>
 <h2 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h2><blockquote>
 <p>type索引类型<br> system&gt;const&gt;eq_ref&gt;ref&gt;range&gt;index&gt;all，要对 type 进行优化的前提：有索引<br>其中：system,const 只是理想情况；实际能达到 ref&gt;range<br>。<strong>隐式转换会导致索引失效！</strong></p>
 <ul>

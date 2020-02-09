@@ -11,10 +11,7 @@
 
   
   <meta name="description" content="最近开发中使用多个延迟预载入中遇到了数组被 foreache 循环后，current 获取不到信息，以前也有类似的事情。发现自己对 foreach 的理解很片面，借助这次机会搞懂这个 foreache 循环。
-以前遇到过的问题foreache 循环引用的变量，在最后一次循环中 数据最后一个有问题。 代码如下：
-1234567891011$arr = [1,2,3];foreach ($arr as $k =&amp;gt; &amp;amp;$v) &amp;#123;	echo $v;&amp;#125;foreach($arr as $k =&amp;gt; $v) &amp;#123;	echo $v;&amp;#125;执行结果会是 123122
-
-因为第一次循环的最后一个 $v 引用了 $arr[2],而后面的循环只是循环修改 $v 也就是 $arr[2]。解决方案 unset($v)或者第二个循环换一个变量名称。">
+以前遇到过的问题foreache 循环引用的变量，在最后一次循环中 数据最后一个有问题。 ">
   
 
   
@@ -88,7 +85,6 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$arr = [1,2,3];</span><br><span class="line"></span><br><span class="line">foreach ($arr as $k =&gt; &amp;$v) &#123;</span><br><span class="line">	echo $v;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">foreach($arr as $k =&gt; $v) &#123;</span><br><span class="line">	echo $v;</span><br><span class="line">&#125;</span><br><span class="line">执行结果会是 123122</span><br></pre></td></tr></table></figure>
 
 <p>因为第一次循环的最后一个 $v 引用了 $arr[2],而后面的循环只是循环修改 $v 也就是 $arr[2]。<br><strong>解决方案 unset($v)或者第二个循环换一个变量名称。</strong></p>
-<a id="more"></a>
 <h2 id="本次遇到-foreache-循环问题"><a href="#本次遇到-foreache-循环问题" class="headerlink" title="本次遇到 foreache 循环问题"></a>本次遇到 foreache 循环问题</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 延迟预载入关联查询</span><br><span class="line"> * @access public</span><br><span class="line"> * @param mixed $relation 关联</span><br><span class="line"> * @return $this</span><br><span class="line"> */</span><br><span class="line">public function load($relation)</span><br><span class="line">&#123;</span><br><span class="line">    if (!$this-&gt;isEmpty()) &#123;</span><br><span class="line">        $item = current($this-&gt;items);</span><br><span class="line">        $item-&gt;eagerlyResultSet($this-&gt;items, $relation);</span><br><span class="line">    &#125;</span><br><span class="line">    return $this;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>eagerlyResultSet 对 $this-&gt;items 进行 foreache 循环，那么 load 方法被调用第二次 $item = current($this-&gt;items); 就会返回 <strong>false</strong>。</p>
