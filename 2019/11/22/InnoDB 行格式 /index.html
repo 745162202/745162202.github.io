@@ -12,7 +12,11 @@
   
   <meta name="description" content="InnoDB 读取数据的方式将数据划分为若干页，以页作为磁盘和内存之间交互的基本单位，InnoDB中页的大小一般是16KB，当需要从磁盘中读取数据时每一次最少将从磁盘中读取16KB的内容到内存中，每一次最少也会把内存中的16KB内容写到磁盘中。
 行的分类
-Compact:MySQL 5.0时被引入的">
+Compact:MySQL 5.0时被引入的，其设计目标是能高效存放数据
+Redundant:MySQL 5.0版本之前InnoDB的行记录存储方式
+Dynamic:类似于Compact行格式，只不过在处理行溢出数据时有点分歧
+Compressed:比 Dynamic 多了一个 zlib 算法压缩。对 BLOB、TEXT、VARCHAR 这类大长度类型的数据能进行非常有效的存储
+支持的 Compact 和 Redundant 格式将其称为 Antelope 文件格式，Barracuda 文件格式下拥有两种新的行记录格式 Compressed 和 Dynamic 两种。">
   
 
   
@@ -89,6 +93,7 @@ Compact:MySQL 5.0时被引入的">
 <li>Compressed:比 Dynamic 多了一个 zlib 算法压缩。对 BLOB、TEXT、VARCHAR 这类大长度类型的数据能进行非常有效的存储<blockquote>
 <p>支持的 Compact 和 Redundant 格式将其称为 Antelope 文件格式，Barracuda 文件格式下拥有两种新的行记录格式 Compressed 和 Dynamic 两种。</p>
 </blockquote>
+<a id="more"></a>
 <h3 id="行的结构"><a href="#行的结构" class="headerlink" title="行的结构"></a>行的结构</h3></li>
 </ol>
 <table>
