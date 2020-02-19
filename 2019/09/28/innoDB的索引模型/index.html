@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>innoDB的索引模型 | Devil</title>
+
+  
+  <meta name="author" content="John Doe">
+  
+
+  
+  <meta name="description" content="innoDB的索引模型数据库索引，我想你并不陌生，在日常工作中会经常接触到。比如某一个SQL查询比较慢，分析完原因之后，你可能就会说“给某个字段加个索引吧”之类的解决方案。但到底什么是索引，索引又是如何工作的呢？一句话简单来说，索引的出现其实就是为了提高数据查询的效率，就像书的目录一样。一本500页">
+  
+
+  
+  
+  <meta name="keywords" content>
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="innoDB的索引模型">
+
+  <meta property="og:site_name" content="Devil">
+
+  
+  <meta property="og:image" content="/favicon.ico">
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Devil" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">Devil</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>innoDB的索引模型</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/09/28/innoDB的索引模型/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-09-28T04:21:22.000Z">
+          2019-09-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h1 id="innoDB的索引模型"><a href="#innoDB的索引模型" class="headerlink" title="innoDB的索引模型"></a>innoDB的索引模型</h1><p>数据库索引，我想你并不陌生，在日常工作中会经常接触到。比如某一个SQL查询比较慢，分析完原因之后，你可能就会说“给某个字段加个索引吧”之类的解决方案。但到底什么是索引，索引又是如何工作的呢？<br>一句话简单来说，索引的出现其实就是为了提高数据查询的效率，就像书的目录一样。一本500页的书，如果你想快速找到其中的某一个知识点，在不借助目录的情况下，那我估计你可得找一会儿。同样，对于数据库的表而言，索引其实就是它的“目录”。</p>
+<h2 id="InnoDB-基础"><a href="#InnoDB-基础" class="headerlink" title="InnoDB 基础"></a>InnoDB 基础</h2><p>在InnoDB中，表都是根据<strong>主键顺序</strong>以索引的形式存放的，这种存储方式的表称为索引组织表, mysql 的数据都是存储在页（16kb）中的，索引也是在页中使用哈希数组链接，指向内容是以链表方式链接的</p>
+<p>主键索引的叶子节点存的是整行数据。在 InnoDB 里，主键索引也被称为聚簇索引（clustered index）。  </p>
+<p>非主键索引的叶子节点内容是主键的值。在 InnoDB 里，非主键索引也被称为二级索引（secondary index）。  </p>
+<p>查询使用非主键索引，需要先在非主键索引的B+树查询对应的主键 id 再回主键索引的B+树查数据 <strong>这个操作称为回表</strong> 。也就是说，基于非主键索引的查询需要多扫描一棵索引树。因此，我们在应用中应该尽量使用主键查询。所以主键长度越小，普通索引的叶子节点就越小，普通索引占用的空间也就越小。一般设置 int 或 bigint</p>
+<h2 id="索引维护"><a href="#索引维护" class="headerlink" title="索引维护"></a>索引维护</h2><p>B+树为了维护索引有序性，在插入新值的时候需要做必要的维护如果插入下一个自增，则只需要在对应的记录后面插入一个新记录。如果新插入的 ID 值是已有 Id 的中间值，就相对麻烦了，需要逻辑上挪动后面的数据，空出位置。<br>而更糟的情况是，如果所在的数据页已经满了，根据B+树的算法，这时候需要申请一个新的数据页，然后挪动部分数据过去。这个过程称为<strong>页分裂</strong>。在这种情况下，性能自然会受影响。</p>
+<h2 id="覆盖索引"><a href="#覆盖索引" class="headerlink" title="覆盖索引"></a>覆盖索引</h2><p>上面提到查询非主键索引需要回表。那么，有没有可能经过索引优化，避免回表过程呢。可以使用<strong>覆盖索引</strong>，比如：你需要查询 name 为‘陈某’的id，那么就不需要回表了。也就是说，在这个查询里面，索引 name 已经“覆盖了”我们的查询需求，我们称为覆盖索引。由于覆盖索引可以减少树的搜索次数，显著提升查询性能，所以使用覆盖索引是一个常用的性能优化手段。</p>
+<h2 id="前缀索引"><a href="#前缀索引" class="headerlink" title="前缀索引"></a>前缀索引</h2><p>B+树这种索引结构，可以利用索引的“最左前缀”，来定位记录。比如：你要查的是所有名字第一个字是“陈”的人，你的SQL语句的条件是”where name like ‘陈%’”。这时，你也能够用上这个索引。可以看到，不只是索引的全部定义，只要满足最左前缀，就可以利用索引来加速检索。这个最左前缀可以是联合索引的最左字符串索引。  </p>
+<p>下面我们来讲讲在建立联合索引的时候，如何安排索引内的字段顺序。  这里我们的评估标准是，索引的复用能力。因为可以支持最左前缀，所以当已经有了(a,b)这个联合索引后，一般就不需要单独在a上建立索引了。因此，第一原则是，如果通过调整顺序，可以少维护一个索引，那么这个顺序往往就是需要优先考虑采用的。</p>
+<h2 id="索引下推"><a href="#索引下推" class="headerlink" title="索引下推"></a>索引下推</h2><p>MySQL 5.6 引入的索引下推优化（index condition pushdown)，<strong>可以在索引遍历过程中，对索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数。</strong></p>
+<p>联合索引（name, age）为例。比如：检索出表中名字第一个字是陈，而且年龄是10岁的所有男孩信息。在数据中姓“陈”有很多个，meysql 不会把所有的姓陈的主键拿到回表读取数据。它会先判断下 age 是否满足条件，对于不等于10的记录，直接判断并跳过，减少不必要的回表。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2020 John Doe
+    
+  </p>
+</footer>
+    
+  </div>
+</div>
+</body>
+</html>
