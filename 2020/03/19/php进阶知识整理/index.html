@@ -98,35 +98,12 @@ PHP生命">
 </li>
 </ul>
 <h2 id="cli生命周期"><a href="#cli生命周期" class="headerlink" title="cli生命周期"></a>cli生命周期</h2><p>流程 | 内容</p>
-<h2 id="cli生命周期-1"><a href="#cli生命周期-1" class="headerlink" title="cli生命周期"></a>cli生命周期</h2><table>
-<thead>
-<tr>
-<th>流程</th>
-<th>内容</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>模块初始化阶段</td>
-<td>启动模块、加载外部扩展、启动附加的php扩展、禁用php.ini里面的禁用函数和类</td>
-</tr>
-<tr>
-<td>请求初始化阶段</td>
-<td>调用zend_activate(初始化GC、初始化编译器、初始化执行器、初始化扫描器)、对信号进行处理、设置超时时间、初始化相关全局变量）</td>
-</tr>
-<tr>
-<td>脚本执行阶段</td>
-<td>读取的PHP代码进行解析，先词法解析并使词法分析指针指向第一个位置，解析成token，然后语法解析，生成抽象语法树，然后通过对抽象语法树进行遍历生成opcode，opcode在虚拟机上执行得到对应的结果</td>
-</tr>
-<tr>
-<td>请求关闭阶段</td>
-<td>调用各个模块中注册的关闭函数和析构函数、将输出缓冲器重内容输出、调用所有扩展注册的钩子rshutdown函数、销毁request相关的全局变量、关闭编译器和执行器、还原ini配置</td>
-</tr>
-<tr>
-<td>模块关闭阶段</td>
-<td>调用sapi_flush() 然后进行销毁所有模块、全局变量、关闭扩展、销毁ini对应的HashTable、关闭ini config、关闭内存管理器、关闭输出output、析构垃圾回收</td>
-</tr>
-</tbody></table>
-<h2 id="数组扩容"><a href="#数组扩容" class="headerlink" title="数组扩容"></a>数组扩容</h2><ul>
+<h2 id="cli生命周期-1"><a href="#cli生命周期-1" class="headerlink" title="cli生命周期"></a>cli生命周期</h2><ul>
+<li>模块初始化阶段<br>启动模块、加载外部扩展、启动附加的php扩展、禁用php.ini里面的禁用函数和类</li>
+<li>　请求初始化阶段　　<br>调用zend_activate(初始化GC、初始化编译器、初始化执行器、初始化扫描器)、对信号进行处理、设置超时时间、初始化相关全局变量）</li>
+<li>脚本执行阶段<br>读取的PHP代码进行解析，先词法解析并使词法分析指针指向第一个位置，解析成token，然后语法解析，生成抽象语法树，然后通过对抽象语法树进行遍历生成opcode，opcode在虚拟机上执行得到对应的结果</li>
+<li>请求关闭阶段<br>调用各个模块中注册的关闭函数和析构函数、将输出缓冲器重内容输出、调用所有扩展注册的钩子rshutdown函数、销毁request相关的全局变量、关闭编译器和执行器、还原ini配置</li>
+<li>模块关闭阶段<br>调用sapi_flush() 然后进行销毁所有模块、全局变量、关闭扩展、销毁ini对应的HashTable、关闭ini config、关闭内存管理器、关闭输出output、析构垃圾回收<h2 id="数组扩容"><a href="#数组扩容" class="headerlink" title="数组扩容"></a>数组扩容</h2></li>
 <li>如果已删除元素所占比例达到阈值，则会移除已被逻辑删除的 Bucket，然后将后面的 Bucket 向前补上空缺的 Bucket，因为 Bucket 的下标发生了变动，所以还需要更改每个元素在中间映射表中储存的实际下标值。</li>
 <li>如果未达到阈值，PHP 则会申请一个大小是原数组两倍的新数组，并将旧数组中的数据复制到新数组中，因为数组长度发生了改变，所以 key-value 的映射关系需要重新计算，这个步骤为重建索引。</li>
 </ul>
