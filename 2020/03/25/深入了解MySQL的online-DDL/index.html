@@ -167,14 +167,8 @@ online DDL 大部分使用 inplace（ALGORITHM=INPLACE）所有操作在 innodb 
 <td>YES</td>
 <td>YES</td>
 </tr>
-<tr>
-<td>对于 MySQL5.7 及以上版本,可以执行以下命令：</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
 </tbody></table>
+<p>对于 MySQL5.7 及以上版本,可以执行以下命令：</p>
 <blockquote>
 <p>ALTER TABLE tbl_name RENAME INDEX old_index_name TO new_index_name</p>
 </blockquote>
@@ -306,8 +300,9 @@ online DDL 大部分使用 inplace（ALGORITHM=INPLACE）所有操作在 innodb 
 <h2 id="online-DDL的空间要求："><a href="#online-DDL的空间要求：" class="headerlink" title="online DDL的空间要求："></a>online DDL的空间要求：</h2><ul>
 <li>临时日志文件：每次申请的大小由 innodb_sort_buffer_size 决定，最大值由 innodb_online_alter_log_max_size，该值默认为128M,允许动态修改。如果临时日志文件超出大小限制，则 online DDL 操作将失败，并且未提交的 DML 操作将回滚。</li>
 <li>索引排序空间：如果DDL操作涉及二级索引的创建，会在MySQL临时目录产生临时排序文件写入 MySQL 临时目录（win 在 C:\Windows\TEMP 可以通过 tmpdir 修改），最终将内容合并到最终表或索引中，然后自动删除临时排序文件。MySQL 5.7.11 中引入了 innodb_tmpdir 设置单独的 online DDL 临时目录，解决临时目录的大小不足以容纳排序文件</li>
-<li>中间表空间：如果DDL操作涉及 rebuild 表，则会在原表所在目录创建临时表空间文件（以#sql-ib开头），临时表空间大小需要等于原表大小，重建完成后会自动重命名临时表空间，删除原表空间。<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2>虽然<strong>对于 ALGORITHM 和 LOCK 参数使用 default 默认值即可，不需要强制指定该值，系统会自行判断，ALGORITHM 优先使用 inplace，对于不支持的表或 DDL 操作使用 copy。</strong>，但是对 online DDL 深入了解还是有必要的。</li>
+<li>中间表空间：如果DDL操作涉及 rebuild 表，则会在原表所在目录创建临时表空间文件（以#sql-ib开头），临时表空间大小需要等于原表大小，重建完成后会自动重命名临时表空间，删除原表空间。</li>
 </ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>虽然<strong>对于 ALGORITHM 和 LOCK 参数使用 default 默认值即可，不需要强制指定该值，系统会自行判断，ALGORITHM 优先使用 inplace，对于不支持的表或 DDL 操作使用 copy，</strong>但是对 online DDL 深入了解还是有必要的。</p>
 
       
     </div>
