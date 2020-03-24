@@ -55,6 +55,279 @@
 
   
     
+    <h3 class="article-title"><a href="/2020/03/25/深入了解MySQL的online-DDL/"><span>深入了解MySQL的online DDL</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/03/25/深入了解MySQL的online-DDL/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-03-24T17:02:31.000Z">
+          2020-03-25
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>online DDL 是在 MySQL5.6 版本后加入的特性，用于支持 DDL 执行期间 DML 语句的并行操作，提高数据库的吞吐量。</p>
+<p>online DDL 大部分使用 inplace（ALGORITHM=INPLACE）所有操作在 innodb 引擎层完成，执行期间可以和其他 DML 操作并行。</p>
+<p><strong>Online DDL的过程是这样的：</strong></p>
+<ol>
+<li>拿MDL写锁</li>
+<li>降级成MDL读锁</li>
+<li>真正做DDL</li>
+<li>升级成MDL写锁</li>
+<li>释放MDL锁</li>
+</ol>
+<p><strong>下面例子都是基于 MySQL5.7</strong></p>
+<h2 id="语法说明"><a href="#语法说明" class="headerlink" title="语法说明"></a>语法说明</h2><blockquote>
+<p>ALTER TABLE tb_name ADD COLUMN NEW_COLUMN, ALGORITHM=INPLACE, LOCK=NONE;</p>
+</blockquote>
+<p>ALGORITHM 子句用来指定执行 DDL 所采用的方式，取值为{DEFAULT|INPLACE|COPY}</p>
+<ul>
+<li>ALGORITHM = COPY<ul>
+<li>执行DDL的过程中采用表拷贝的方式进行，过程中会阻塞所有的DML</li>
+</ul>
+</li>
+<li>ALGORITHM = INPLACE<ul>
+<li>执行DDL的过程中不发生表拷贝，过程中允许并发执行DML</li>
+</ul>
+</li>
+<li>ALGORITHM = DEFAULT<ul>
+<li>默认选项，MYSQL会自动选择最优的执行方式，原则是尽量保证DML的并发操作</li>
+</ul>
+</li>
+</ul>
+<p>LOCK 子句描述持有的锁的类型来控制 DML(Data Manipulation Language)的并发，取值{DEFAULT|NONE|SHARED|EXCLUSIVE}</p>
+<ul>
+<li>LOCK = EXCLUSIVE <ul>
+<li>持有排它锁，阻塞所有的请求</li>
+</ul>
+</li>
+<li>LOCK = SHARED <ul>
+<li>允许SELECT，但是阻塞INSERT UPDATA DELETE</li>
+</ul>
+</li>
+<li>LOCK = NONE <ul>
+<li>不对表加锁，允许所有请求</li>
+</ul>
+</li>
+<li>LOCK = DEFAULT <ul>
+<li>根据 DDL 的类型，在保证最大并发的原则下来选择 LOCK 的取值</li>
+</ul>
+</li>
+</ul>
+<p>下面我们列出各个 DDL 是否支持 inplace。 </p>
+<h2 id="对索引操作的-online-DDL-支持"><a href="#对索引操作的-online-DDL-支持" class="headerlink" title="对索引操作的 online DDL 支持"></a>对索引操作的 online DDL 支持</h2><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>inplace</th>
+<th>是否copy</th>
+<th>允许并发DML</th>
+<th>仅修改元数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>创建二级索引</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>删除索引</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>修改索引名称 （5.6没有）</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>更改索引类型</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>对于 MySQL5.7 及以上版本,可以执行以下命令：</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>ALTER TABLE tbl_name RENAME INDEX old_index_name TO new_index_name</p>
+</blockquote>
+<p>对于 MySQL5.7 以前的版本，可以执行下面两个命令：</p>
+<blockquote>
+<p>LTER TABLE tbl_name DROP INDEX old_index_name<br>ALTER TABLE tbl_name ADD INDEX new_index_name(column_name)</p>
+</blockquote>
+<p>从上面看出 Mysql5.7 以前是删除后再添加的模式。</p>
+<h2 id="对主键操作的-online-DDL-支持"><a href="#对主键操作的-online-DDL-支持" class="headerlink" title="对主键操作的 online DDL 支持"></a>对主键操作的 online DDL 支持</h2><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>inplace</th>
+<th>是否copy</th>
+<th>允许并发DML</th>
+<th>仅修改元数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>添加主键</td>
+<td>YES*</td>
+<td>YES*</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>删除主键</td>
+<td>NO</td>
+<td>YES</td>
+<td>NO</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>删除主键并添加另一个</td>
+<td>YES</td>
+<td>YES</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+</tbody></table>
+<h2 id="列操作的-online-DDL-支持"><a href="#列操作的-online-DDL-支持" class="headerlink" title="列操作的 online DDL 支持"></a>列操作的 online DDL 支持</h2><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>inplace</th>
+<th>是否copy</th>
+<th>允许并发DML</th>
+<th>仅修改元数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>添加列</td>
+<td>YES</td>
+<td>YES</td>
+<td>YES*</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>删除列</td>
+<td>YES</td>
+<td>YES</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>重命名列</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES*</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>列的重新排序</td>
+<td>YES</td>
+<td>YES</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>设置列默认值</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>删除默认值</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>更改列数据类型</td>
+<td>NO</td>
+<td>YES</td>
+<td>NO</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>修改 VARCHAR 大小（5.6没有）</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>更改自动增量值</td>
+<td>YES</td>
+<td>NO</td>
+<td>YES</td>
+<td>NO*</td>
+</tr>
+<tr>
+<td>NULL</td>
+<td>YES</td>
+<td>YES*</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+<tr>
+<td>NOT NULL</td>
+<td>YES*</td>
+<td>YES*</td>
+<td>YES</td>
+<td>NO</td>
+</tr>
+</tbody></table>
+<h2 id="online-DDL的空间要求："><a href="#online-DDL的空间要求：" class="headerlink" title="online DDL的空间要求："></a>online DDL的空间要求：</h2><ul>
+<li>临时日志文件：每次申请的大小由 innodb_sort_buffer_size 决定，最大值由 innodb_online_alter_log_max_size，该值默认为128M,允许动态修改。如果临时日志文件超出大小限制，则 online DDL 操作将失败，并且未提交的 DML 操作将回滚。</li>
+<li>索引排序空间：如果DDL操作涉及二级索引的创建，会在MySQL临时目录产生临时排序文件写入 MySQL 临时目录（win 在 C:\Windows\TEMP 可以通过 tmpdir 修改），最终将内容合并到最终表或索引中，然后自动删除临时排序文件。MySQL 5.7.11 中引入了 innodb_tmpdir 设置单独的 online DDL 临时目录，解决临时目录的大小不足以容纳排序文件</li>
+<li>中间表空间：如果DDL操作涉及 rebuild 表，则会在原表所在目录创建临时表空间文件（以#sql-ib开头），临时表空间大小需要等于原表大小，重建完成后会自动重命名临时表空间，删除原表空间。<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2>虽然<strong>对于 ALGORITHM 和 LOCK 参数使用 default 默认值即可，不需要强制指定该值，系统会自行判断，ALGORITHM 优先使用 inplace，对于不支持的表或 DDL 操作使用 copy。</strong>，但是对 online DDL 深入了解还是有必要的。</li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2020/03/19/php进阶知识整理/"><span>php进阶知识整理</span></a></h3>
     
   
@@ -817,55 +1090,11 @@
 
 
 
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2019/09/14/增加代码可读性的命名规范/"><span>增加代码可读性的命名规范</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2019/09/14/增加代码可读性的命名规范/" rel="bookmark">
-        <time class="entry-date published" datetime="2019-09-14T03:04:02.000Z">
-          2019-09-14
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>每天开发赶工不注意方法命名的统一，使代码的可读可理解变得很差。本文参考网上文章结合自身的编码习惯做整理。<br><strong>写程序读的代码简单，写人读的代码难</strong></p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
 
 <nav class="pagination">
   
+  
+  <a href="/page/2/" class="pagination-next">Next</a>
   
 </nav>
     </main>
