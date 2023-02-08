@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="本文章参考的 ES 源码版本为 6.1 ​   fixed auto queue size 线程池是在 ES 在 v6.0.0-alpha2 引入的 feature, 它类似于 fixed 线程池（核心线程数和最大线程数一致），但是它 queue_size 会根据基于利特尔定律 ( Little’s Law ）计算自动调整，当前只是用在 search 线程池。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ES动态队列调整线程池设计">
+<meta property="og:url" content="https://745162202.github.io/elasticsearch/ES%E5%8A%A8%E6%80%81%E9%98%9F%E5%88%97%E8%B0%83%E6%95%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AE%BE%E8%AE%A1/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="本文章参考的 ES 源码版本为 6.1 ​   fixed auto queue size 线程池是在 ES 在 v6.0.0-alpha2 引入的 feature, 它类似于 fixed 线程池（核心线程数和最大线程数一致），但是它 queue_size 会根据基于利特尔定律 ( Little’s Law ）计算自动调整，当前只是用在 search 线程池。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1660062789058-6b5b4c00-8165-47e3-bb22-a2953e37a8d4.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1660062921151-418d0b78-7caa-460c-86e5-737519ded21d.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1660062933520-f1af3a64-5a22-4b04-b288-d917fb2ad9f8.png">
+<meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-08T17:22:38.668Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1660062789058-6b5b4c00-8165-47e3-bb22-a2953e37a8d4.png">
+
+
+<link rel="canonical" href="https://745162202.github.io/elasticsearch/ES%E5%8A%A8%E6%80%81%E9%98%9F%E5%88%97%E8%B0%83%E6%95%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AE%BE%E8%AE%A1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/elasticsearch/ES%E5%8A%A8%E6%80%81%E9%98%9F%E5%88%97%E8%B0%83%E6%95%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AE%BE%E8%AE%A1/","path":"elasticsearch/ES动态队列调整线程池设计/","title":"ES动态队列调整线程池设计"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ES动态队列调整线程池设计 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E5%89%96%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">设计剖析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E4%B8%AD%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">代码中设计模式应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E7%9A%84%E7%BC%96%E5%86%99"><span class="nav-number">3.</span> <span class="nav-text">自动化测试的编写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">总结：</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/elasticsearch/ES%E5%8A%A8%E6%80%81%E9%98%9F%E5%88%97%E8%B0%83%E6%95%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AE%BE%E8%AE%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ES动态队列调整线程池设计 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ES动态队列调整线程池设计
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/elasticsearch/" itemprop="url" rel="index"><span itemprop="name">elasticsearch</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><strong>本文章参考的 ES 源码版本为 6.1</strong></p>
+<p>​   fixed auto queue size 线程池是在 ES 在 v6.0.0-alpha2 引入的 feature, 它类似于 fixed 线程池（核心线程数和最大线程数一致），但是它 queue_size 会根据基于利特尔定律 ( <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Little's_law">Little’s Law</a> ）计算自动调整，当前只是用在 search 线程池。</p>
+<span id="more"></span>
+<p>​   那么这个线程池动态调整对了的设计为了解决什么问题呢？</p>
+<p>​   大家都知道一个ES 查询的时候需要获取每个节点上分片的计算结果，然后由协调节点获取数据再次计算后返回给客户端。在这种情况下有可能某个节点压力过大处理查询速度过慢变成短板，拖累整个集群的查询响应。举个例子：</p>
+<p>​   一个索引有三个分片在三台不同节点上，一个复杂查询到达其中两个节点1秒内完成了计算，剩下一个节点由于性能等问题处理了3秒那么返回客户端需要3秒以上的时间。</p>
+<p>​   简单总结这种某节点压力过大变为短板的主要原因类似生产消费中的背压概念，生产速度大于消费速度，导致这一些列问题，那么我们可以通过动态减少队列数量，拒绝部分请求查询解决节点背压问题，并且 ES 是可以配置多副本的那么查询会被分配到下一个节点中。详细见<a target="_blank" rel="noopener" href="https://github.com/elastic/elasticsearch/pull/23884">#23884</a></p>
+<p>​   遗憾的是这个实验性的 feature 在 ES7.0 被标记遗弃将在 ES8.0 彻底删除。他在源码中初始、最大、最小的队列数量是一致的为 1000 所以默认是没有开启该功能的。我们这里只讨论他的设计，并不关心为什么他被遗弃。</p>
+<h2 id="设计剖析"><a href="#设计剖析" class="headerlink" title="设计剖析"></a>设计剖析</h2><p>​   上面讲到这个线程池基于利特尔定律，那么什么是利特尔定律。</p>
+<p>​   利特尔法则派生于<strong>排队论</strong>，用以下数学公式表示：</p>
+<p>​   L = λW</p>
+<p>​   L 系统中存在的平均请求数量。</p>
+<p>​   λ 请求有效到达速率。例如：5/s 表示每秒有5个请求到达系统。</p>
+<p>​   W 请求在系统中的平均等待执行时间。</p>
+<p>举个客服处理问题的例子：</p>
+<p>​   假设当前处理的速率式平均每个用户需要服务1人/分钟，用户最多等待5分钟后就会有不好的体验，那么在一个客服提供服务的时候最多只能由5个人排队时最佳的选择。如果当有大量的用户打电话咨询问题，那么我们需要增加客服数量来保证良好的服务体验。</p>
+<p>​   知道了这个理论我们来看看在 ES 中 fixed_auto_queue_size  如何采用特尔定律实现，在设计fixed auto queue size 线程池中，L表示是最佳队列大小， λ表示任务的处理速率，W表示期望处理请求所需的平均时间。他还增加了一个 auto_queue_frame_size 表示多少次查询后，进行队列大小调整，源码中默认为 2000。举个例子：</p>
+<p>​   假设场景为一个 9 分片的索引，在3个数据节点下，一次查询平均每个节点需要 3个线程池的线程处理这些查询请求。平均客户端 666  次请求就会触发一次队列大小调整默认值为 50， 这是写死在源码中的。这里也可以看出如果索引分片过大也会频繁触发修改队列大小。</p>
+<p>​   下面数据参考 ES 对这个 MR 的测试详细了解下他对这种单机器查询速度过慢有瓶颈的场景下的表现。</p>
+<p>​   测试环境采用5个data节点（32 核、64GB 内存、30GB 的 JVM 堆）和1个压测客户端，保存 1.2 亿条数据的环境。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 最小队列数</span></span><br><span class="line">thread_pool.search.min_queue_size: <span class="number">10</span></span><br><span class="line"><span class="comment">// 最大队列数</span></span><br><span class="line">thread_pool.search.max_queue_size: <span class="number">1000</span></span><br><span class="line"><span class="comment">// 初始化队列数</span></span><br><span class="line">thread_pool.search.initial_queue_size: <span class="number">1000</span></span><br><span class="line"><span class="comment">// 目标响应时长</span></span><br><span class="line">thread_pool.search.target_response_rate: 5s</span><br><span class="line"><span class="comment">// 调整最佳队列的窗口</span></span><br><span class="line">thread_pool.search.frame_window: <span class="number">2000</span></span><br><span class="line"><span class="comment">// 每次调整最大队列的上下浮动，默认无法调整</span></span><br><span class="line">thread_pool.search.adjustment_amount: <span class="number">50</span></span><br></pre></td></tr></table></figure>
+
+<p>对第五台机器加压，命令如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">stress -i <span class="number">8</span> -c <span class="number">8</span> -m <span class="number">8</span> -d <span class="number">8</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1660062789058-6b5b4c00-8165-47e3-bb22-a2953e37a8d4.png" alt="image.png"></p>
+<center>上图为 target_response_time 4s，其他值不变的结果</center>
+
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1660062921151-418d0b78-7caa-460c-86e5-737519ded21d.png" alt="img"></p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1660062933520-f1af3a64-5a22-4b04-b288-d917fb2ad9f8.png" alt="img"></p>
+<center>上面两张图为没有fixed auto queue size</center>
+
+<h2 id="代码中设计模式应用"><a href="#代码中设计模式应用" class="headerlink" title="代码中设计模式应用"></a>代码中设计模式应用</h2><ol>
+<li>包装器模式</li>
+</ol>
+<p>​   上面说过特尔定律必须需要知道查询开始执行的时间和结束的时间。 ES 再写这块块功能的时候，使用了包装器模式，有一个查询在再执行前会把执行任务包装到特定的方法中，真正执行的时候会先执行包装器的代码。最后执行查询任务。我们来看下伪代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// runable 时间包装类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TimedRunnable</span> <span class="keyword">implements</span> <span class="title class_">Runnable</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Runnable original;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">long</span> creationTimeNanos;</span><br><span class="line">    </span><br><span class="line">    TimedRunnable(<span class="keyword">final</span> Runnable original) &#123;</span><br><span class="line">        <span class="built_in">this</span>.original = original;</span><br><span class="line">        <span class="built_in">this</span>.creationTimeNanos = System.nanoTime();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            doRun();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception t) &#123;</span><br><span class="line">            onFailure(t);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            onAfter();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">doRun</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            startTimeNanos = System.nanoTime();</span><br><span class="line">            original.run();</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            finishTimeNanos = System.nanoTime();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onFailure</span><span class="params">()</span>&#123;...&#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onAfter</span><span class="params">()</span>&#123;...&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调整队列的线程池</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">QueueResizingEsThreadPoolExecutor</span> <span class="keyword">extends</span> <span class="title class_">ThreadPoolExecutor</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Function&lt;Runnable, Runnable&gt; runnableWrapper;</span><br><span class="line">    </span><br><span class="line">    QueueResizingEsThreadPoolExecutor(Function&lt;Runnable, Runnable&gt; runnableWrapper) &#123;</span><br><span class="line">         <span class="built_in">this</span>.runnableWrapper =  runnableWrapper;  </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">execute</span><span class="params">(<span class="keyword">final</span> Runnable command)</span> &#123;</span><br><span class="line">       <span class="built_in">super</span>.execute(<span class="built_in">this</span>.runnableWrapper.apply(command));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用时只要初始化的时候吧 TimedRunnable 传入就可以了</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">QueueResizingEsThreadPoolExecutor</span>(TimedRunnable::<span class="keyword">new</span>) </span><br></pre></td></tr></table></figure>
+
+<p>​   TimedRunnable 增强了原来 Runnable， 并且使用函数式编程把两个方法解耦，让每个类只关注自己的内容，增加了代码的内聚性遵循单一原则，这个包装器可以替换为任意的实现遵循了依赖倒置原则。</p>
+<h2 id="自动化测试的编写"><a href="#自动化测试的编写" class="headerlink" title="自动化测试的编写"></a>自动化测试的编写</h2><p>​   当你的代码设计非常优美的时候，你会发现写测试也会非常简单。上面使用的函数式编程遵循了依赖倒置原则。我们就可以使用一个虚假的实现来创建测试数据。直接返回快或慢的结果，然后去检查队列大小变化是否符合预期的增加或者减少。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Function&lt;Runnable, Runnable&gt; <span class="title function_">fastWrapper</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> (runnable) -&gt; <span class="keyword">new</span> <span class="title class_">SettableTimedRunnable</span>(TimeUnit.NANOSECONDS.toNanos(<span class="number">100</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> Function&lt;Runnable, Runnable&gt; <span class="title function_">slowWrapper</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> (runnable) -&gt; <span class="keyword">new</span> <span class="title class_">SettableTimedRunnable</span>(TimeUnit.MINUTES.toNanos(<span class="number">2</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 虚拟实现，方便测试</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SettableTimedRunnable</span> <span class="keyword">extends</span> <span class="title class_">TimedRunnable</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">long</span> timeTaken;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">SettableTimedRunnable</span><span class="params">(<span class="type">long</span> timeTaken)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>(() -&gt; &#123;&#125;);</span><br><span class="line">        <span class="built_in">this</span>.timeTaken = timeTaken;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">long</span> <span class="title function_">getTotalNanos</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> timeTaken;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">long</span> <span class="title function_">getTotalExecutionNanos</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> timeTaken;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">QueueResizingEsThreadPoolExecutor</span>(fastWrapper::<span class="keyword">new</span>) </span><br><span class="line"><span class="keyword">new</span> <span class="title class_">QueueResizingEsThreadPoolExecutor</span>(slowWrapper::<span class="keyword">new</span>) </span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h2><p>​   这个模块中还是比较多眼前一亮的设计，我这里只是取了一部分来分析给大家，更多的可以自己去看源码，ES 有非常多线程池，整个线程池中总共就四种类型 scaling executor、fixed executor、auto queue adjusting executor，还有一种非常特别的“线程池” direct excutor   它的实现和它的名称一样直接由调用线程直接。对这块感兴趣的可以自己去看 ThreadPool 这块代码比较简单也比较容易看懂。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
