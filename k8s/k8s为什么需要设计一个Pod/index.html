@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Pod 是 Kubernetes 项目的原子调度单位，pod 中容器直接可以共享存储和网络，可以很方便的进行文件交互。 0. 为什么需要 pod​   我们可以把 Kubernetes 比作操作系统，容器镜像就是这个系统里的安装包，那么容器就可以类比为进程。在一个真正的操作系统里，进程并不是孤苦伶仃地独自运行的，而是以进程组的方式，有原则地组织在一起。 ​   一个主进程下面有多个线程一起协作下有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s为什么需要设计一个Pod">
+<meta property="og:url" content="https://745162202.github.io/k8s/k8s%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AAPod/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="Pod 是 Kubernetes 项目的原子调度单位，pod 中容器直接可以共享存储和网络，可以很方便的进行文件交互。 0. 为什么需要 pod​   我们可以把 Kubernetes 比作操作系统，容器镜像就是这个系统里的安装包，那么容器就可以类比为进程。在一个真正的操作系统里，进程并不是孤苦伶仃地独自运行的，而是以进程组的方式，有原则地组织在一起。 ​   一个主进程下面有多个线程一起协作下有">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1655025525393-016f168e-6d32-4802-9169-4384078a1938.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1654974655821-584fb6d6-6eeb-4e73-a6a7-9e292de4eaa9.png">
+<meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-09T14:42:55.805Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1655025525393-016f168e-6d32-4802-9169-4384078a1938.png">
+
+
+<link rel="canonical" href="https://745162202.github.io/k8s/k8s%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AAPod/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/k8s/k8s%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AAPod/","path":"k8s/k8s为什么需要设计一个Pod/","title":"k8s为什么需要设计一个Pod"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>k8s为什么需要设计一个Pod | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-pod"><span class="nav-number">1.</span> <span class="nav-text">0. 为什么需要 pod</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-pod-%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">1. pod 资源共享的实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">2.参考资料：</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/k8s/k8s%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AAPod/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="k8s为什么需要设计一个Pod | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          k8s为什么需要设计一个Pod
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/k8s/" itemprop="url" rel="index"><span itemprop="name">k8s</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>Pod 是 Kubernetes 项目的原子调度单位，pod 中容器直接可以共享存储和网络，可以很方便的进行文件交互。</p>
+<h3 id="0-为什么需要-pod"><a href="#0-为什么需要-pod" class="headerlink" title="0. 为什么需要 pod"></a>0. 为什么需要 pod</h3><p>​   我们可以把 <strong>Kubernetes 比作操作系统，容器镜像就是这个系统里的安装包，那么容器就可以类比为进程</strong>。在一个真正的操作系统里，进程并不是孤苦伶仃地独自运行的，而是以进程组的方式，有原则地组织在一起。</p>
+<p>​   一个主进程下面有多个线程一起协作下有条不紊的工作，Linux 操作系统语境下的线程可以称之为轻量级进程，他们组成了一个线程组。<strong>当我们把容器类比为进程，那么 Kubernetes 项目其实就是将进程组的概念映射到了容器技术中称之为 pod</strong>。</p>
+<span id="more"></span>
+<p>​   Kubernetes 项目之所以要这么做是因为 Google 公司在 Borg（谷歌的内部容器管理平台） 项目的开发和实践过程中，Google 公司的工程师们发现他们<strong>部署的应用往往都存在着类似于进程和进程组的关系</strong>，更具体地说就是这些应用之间有着密切的协作关系，使得它们必须部署在同一台机器上。</p>
+<p>​   如果把这种密切关系拆分它们就可能被调度到不同的节点上，那么它们需要花费非常大的代价花费在远程通信上。不仅增加了程序的复杂度，而且更加容易出现问题，并且我们还需要考虑更多的调度场景比如：</p>
+<p>1.部分错误下是否需要回滚释放占用的资源。</p>
+<p>2.资源紧张时多个调度资源争抢导致所有应用都无法完全成功，不可避免的调度效率损失和死锁的可能性。</p>
+<p>​   为了解决这一系列的难题，Kubernetes 项目里使用 Pod 为原子调度单位，这就意味着<strong>Kubernetes 项目的调度器是统一按照 Pod 而非容器的资源需求进行计算的</strong>，这些问题就迎刃而解了。</p>
+<h3 id="1-pod-资源共享的实现"><a href="#1-pod-资源共享的实现" class="headerlink" title="1. pod 资源共享的实现"></a>1. pod 资源共享的实现</h3><p>pod 中的容器在它们之间共享命资源，那么它是如何实现的呢？我们先来看看 docker 如何实现共享资源。</p>
+<p>第一步启动 pause</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name pause -p 80:80 --ipc=&quot;shareable&quot; kubernetes/pause</span><br></pre></td></tr></table></figure>
+
+
+
+<p>第二步启动启动nginx，并且加入 container:pause</p>
+<p><em>network</em> 网络</p>
+<p><em>IPC</em>（Inter-Process Communication，进程间通信</p>
+<p><em>pid</em> 父类id ，通过这个参数共享 nameSpace。 pid 1 为 pause</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"> <span class="attribute">error_log</span> stderr;</span><br><span class="line"> <span class="section">events</span> &#123; <span class="attribute">worker_connections</span>  <span class="number">1024</span>; &#125;</span><br><span class="line"> <span class="section">http</span> &#123;</span><br><span class="line">     <span class="attribute">access_log</span> /dev/stdout combined;</span><br><span class="line">     <span class="section">server</span> &#123;</span><br><span class="line">         <span class="attribute">listen</span> <span class="number">80</span> default_server;</span><br><span class="line">         <span class="attribute">server_name</span> example.com www.example.com;</span><br><span class="line">         <span class="section">location</span> / &#123;</span><br><span class="line">             <span class="attribute">proxy_pass</span> http://127.0.0.1:8080;</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br><span class="line"><span class="attribute">docker</span> run -d --name nginx -v [pwd]/nginx.conf:/etc/nginx/nginx.conf --net=container:pause --ipc=container:pause --pid=container:pause nginx</span><br></pre></td></tr></table></figure>
+
+
+
+<p>第三步启动nginx，并且加入 container:pause</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name tomcat --net=container:pause --ipc=container:pause --pid=container:pause tomcat</span><br></pre></td></tr></table></figure>
+
+
+
+<p>​   接下来通过宿主机访问 localhost 就可以访问到通过 nginx 代理的 tomcat 的端口访问到 tomcat 的 404 页面，因为 pause 、nginx、tomcat 已经网络共享了。</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1655025525393-016f168e-6d32-4802-9169-4384078a1938.png" alt="img"></p>
+<p>​   共享资源是不是很复杂，但是 kubernetes 的 pod 已经帮我们封装了这层逻辑。在 Kubernetes 中pause 容器充当 pod 中所有容器的“父容器”，<strong>pause 容器永远都是第一个被创建的容器</strong>，它使用的是一个非常特殊的镜像 <code>k8s.gcr.io/pause</code>。这个镜像是一个用汇编语言编写的、永远处于“暂停”状态的容器，解压后的大小也只有 100~200 KB 左右。<strong>pause 容器有两个核心职责，首先它是 Pod 中 容器共享资源其次通过 pid 1 管理下面的容器（进程）</strong>。</p>
+<p>下图为 tomcat 看到的进程。</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1654974655821-584fb6d6-6eeb-4e73-a6a7-9e292de4eaa9.png" alt="img"></p>
+<h3 id="2-参考资料："><a href="#2-参考资料：" class="headerlink" title="2.参考资料："></a>2.参考资料：</h3><p><a target="_blank" rel="noopener" href="https://www.ianlewis.org/en/almighty-pause-container">The Almighty Pause Container</a></p>
+<p>极客时间-深入剖析Kubernetes</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/k8s/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/" rel="next" title="被隔离的容器进程如何进行交互">
+                  被隔离的容器进程如何进行交互 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

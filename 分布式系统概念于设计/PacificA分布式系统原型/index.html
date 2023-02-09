@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="大数据时代对大规模分布式存储系统在存储和处理需求，微软 2008 年发表的一个通用的复制框架 pacifcA，也可称之为一个原型系统。该框架简单，实用，提供强一致性和复制策略实现描述。它对于我们理解分布式系统的强一致性，容错，仲裁有很好的指导意义。现在很多开源软件设计还是沿用该框架思路来解决分布式遇到的问题，如： elasticsearch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PacificA分布式系统原型">
+<meta property="og:url" content="https://745162202.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/PacificA%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%8E%9F%E5%9E%8B/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="大数据时代对大规模分布式存储系统在存储和处理需求，微软 2008 年发表的一个通用的复制框架 pacifcA，也可称之为一个原型系统。该框架简单，实用，提供强一致性和复制策略实现描述。它对于我们理解分布式系统的强一致性，容错，仲裁有很好的指导意义。现在很多开源软件设计还是沿用该框架思路来解决分布式遇到的问题，如： elasticsearch">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230209224906224.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230209224938694.png">
+<meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-09T15:05:04.630Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230209224906224.png">
+
+
+<link rel="canonical" href="https://745162202.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/PacificA%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%8E%9F%E5%9E%8B/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/PacificA%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%8E%9F%E5%9E%8B/","path":"分布式系统概念于设计/PacificA分布式系统原型/","title":"PacificA分布式系统原型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PacificA分布式系统原型 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E5%A4%87%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">主备数据复制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">2 配置管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A7%9F%E6%9C%9F%E5%92%8C%E6%95%85%E9%9A%9C%E6%A3%80%E6%B5%8B"><span class="nav-number">3.</span> <span class="nav-text">租期和故障检测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%8F%98%E6%9B%B4%E3%80%81%E5%8D%8F%E8%B0%83%E5%92%8C%E6%81%A2%E5%A4%8D"><span class="nav-number">4.</span> <span class="nav-text">配置变更、协调和恢复</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4-secondaries"><span class="nav-number">4.1.</span> <span class="nav-text">移除 secondaries</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4-primary"><span class="nav-number">4.2.</span> <span class="nav-text">移除 primary</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A2%9E%E5%8A%A0-secondary"><span class="nav-number">4.3.</span> <span class="nav-text">增加 secondary</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-number">5.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/PacificA%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%8E%9F%E5%9E%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="PacificA分布式系统原型 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PacificA分布式系统原型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">分布式系统</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>大数据时代对大规模分布式存储系统在存储和处理需求，微软 2008 年发表的一个通用的复制框架 pacifcA，也可称之为一个原型系统。该框架简单，实用，提供强一致性和复制策略实现描述。它对于我们理解分布式系统的强一致性，容错，仲裁有很好的指导意义。现在很多开源软件设计还是沿用该框架思路来解决分布式遇到的问题，如： elasticsearch</p>
+<span id="more"></span>
+<h2 id="主备数据复制"><a href="#主备数据复制" class="headerlink" title="主备数据复制"></a>主备数据复制</h2><p>pacifcA 的数据复制采用的是primary/backup进行数据复制，我们区分两种类型的请求：不修改数据的查询请求和修改数据的更新请求。这些请求都需要发送到 primary 服务器。primary 服务器处理所有涉及查询的请求并辅助处理涉及需要更新的 secondary 节点。</p>
+<p>假设正常更新的情况下，如果副本组保证相同顺序处理更新请求则可以实现强一致性（Strong consistency）。</p>
+<p>因此 primary 需要在更新中分配唯一连续单调递增的数字，并且按照顺序转发所有请求到 secondaries</p>
+<p>那么如何实现呢？</p>
+<p>我们需要副本维护一个准备好的请求列表（prepared list）和对应该列表的一个提交点（commented list）  ，这个列表根据分配给请求的序列号（serial number  简称 sn ）进行排序并且是连续的（即： sn 的请求仅在 插⼊ sn - 1 后才插⼊  ）在 prepare list 中 commit point 之前的部分叫做committed list。committed list中的数据保证不会丢失（除非系统发生不可忍受的故障，即发生了所有replica的永久性故障）</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/image-20230209224906224.png" alt="image-20230209224906224"></p>
+<p><em><strong>Commit Invariant</strong></em>：假设p是primary，并且q是当前配置中的任意一个replica，committed(q) ⊆ committed(p) ⊆ prepared(q)成立.</p>
+<h2 id="2-配置管理"><a href="#2-配置管理" class="headerlink" title="2 配置管理"></a>2 配置管理</h2><p>通过一个全局配置管理器（global configuration manager）负责维护系统中所有副本组的配置并且需要维护一个版本号。</p>
+<p>当服务器（通过故障检查）发现某个副本异常或者有新加入的副本，这两种情况下都会发起配置变更。在配置变更时需要携带当前节点配置信息的版本号，当版本号和配置管理器的版本号一致才请求才会被接受，配置变更完成后对当前版本号 + 1，其他请求过来因为版本号不一致会被直接拒绝。这样就解决了多台服务都发起修改请求的问题。因为全局配置管理器只接收最早来的请求而不管是谁发起的请求。</p>
+<p><em><strong>Primary Invariant</strong></em>: 在任何时候，只有全局配置管理器的当前配置中将服务器p作为 primary 时，服务器p才会认为自己是 primary。因此在任意时候，一个 replica group 中仅有一个服务器认为自己是 primary。</p>
+<h2 id="租期和故障检测"><a href="#租期和故障检测" class="headerlink" title="租期和故障检测"></a>租期和故障检测</h2><p>前面我们提到了变更配置操作，其中还有一个问题我们没有提及，就 replica group 中不同的服务器本地配置文件可能不是最新的。有一种情况可能同时又两个 primary，新的 primary已经做了配置的变更移除了旧的 primary， 但是旧的 primary 并不知情还在对外提供查询服务（更新需要比对 configuration  version）这个情况下服务违反了强一致性。</p>
+<p>pacificA 使用租期的一个概念，primary 是临时的需要满足一定的条件才可以保持，保持的方式为在一个租期内 primary  为每个 secondary  发送信标（beacons），等待 secondary  响应该信标（acknowledge），如果正常时间内响应了那么 primary  就确定自己还是 primary ，然后到下一个租期时继续发送信标。在这个过程中可能又下面两种可能的异常：</p>
+<ul>
+<li>如果主节点在一定时间内（lease period）未收到从节点对心跳的回应，那主节点认为从节点异常，，于是向配置管理服务汇报更新复制集拓扑，<strong>将该异常从节点从复制集中移除，同时主节点租期也结束了需要把自己降级不再作为主</strong>；</li>
+<li>如果从节点在一定时间内（grace period）未收到主节点的心跳信息，那么其认为主节点异常，于是向配置管理服务汇报回信复制集拓扑，将主节点从复制集中移除，同时将自己提升为新的主。</li>
+</ul>
+<p><strong>这里只要</strong> <strong>lease period &lt;= grace peroid 那么就不会又二主的可能性了，</strong>因为必然是主先发现异常把自己降级<strong>。</strong></p>
+<p>这里的信标就时心跳的概念 </p>
+<p>pacificA 也提出 primary  也不需要每次通过信标交互，因为软件正常使用的时候也有 update 请求在和 secondary  通信，只有在空闲的时候才需要通过信标通信。</p>
+<h2 id="配置变更、协调和恢复"><a href="#配置变更、协调和恢复" class="headerlink" title="配置变更、协调和恢复"></a>配置变更、协调和恢复</h2><p>pacificA  协议最复杂的部分就是如何处理配置变更(reconfiguration)。我们将配置变更分为三种：移除sedondary、移除 primary 和增加 secondary。</p>
+<p>有三种情况需要对全局配置管理进行操作：</p>
+<ul>
+<li> 副本组中 sedondary 离线，primary 更新配置移除该节点元数据信息</li>
+<li> 副本组 primary 离线，sedondary 更新配置移除 primary ，请求被全局配置管理器接受的该 sedondary  成为新的 primary</li>
+<li> 副本组增加 sedondary （可能是节点离线后回归），primary 更新配置增加该节点</li>
+</ul>
+<h3 id="移除-secondaries"><a href="#移除-secondaries" class="headerlink" title="移除 secondaries"></a>移除 secondaries</h3><p>当 primary 发现 sedondary 发生异常，primary 会提交配置变更，该变更会移除发生移除的 sedondary 。当全局配置管理同意并完成变更 primary 继续工作才能继续工作（前面提到过因为当发现 secondary 不可用时，primary 先是认为自己的租期到期了，并停止处理任何请求）</p>
+<h3 id="移除-primary"><a href="#移除-primary" class="headerlink" title="移除 primary"></a>移除 primary</h3><p>sedondary  通过前面描述的租借机制发现 primary  已经不可用，就会触发移除 primary。 sedondary  会提交配置变更，提出该 sedondary  为新 primary ，移除旧 primary 。当全局配置管理同意后，该secondary就将自己视为了new primary。然后需要进行一次<strong>协调</strong> <strong>(reconciliation ）</strong>.</p>
+<p><em>reconciliation 包括：落后</em> new primary 补齐和超过 new primary 的回退操作，并且提交当前所有的 prepared list。</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/image-20230209224938694.png" alt="image-20230209224938694"></p>
+<p>上图时论文中图片描述</p>
+<p>如上图所示，A 是 old primary，随后 B 替换掉 A 成为 new primary。第一条线表示进行 reconciliation之前的 prepare list 和 committed list 状态。第二条线表示执行完 reconciliation 之后的状态。</p>
+<h3 id="增加-secondary"><a href="#增加-secondary" class="headerlink" title="增加 secondary"></a>增加 secondary</h3><p>在将一个新的 secondary 加入到 replica group 时，必须要保证Commit Invariant，这就要求新的replicas在加入replica group之前必须拥有了适当的prepared list，我们将该过程称为<strong>恢复 （recovery）</strong>。</p>
+<p>一种简单的方法时让 primary 延迟处理所有的更新请求，直到 new  secondary 完成 perpared list 的复制，但是这在实践中是不可接受的。另一种替换方式是，该 new secondary 在刚加入时作为 candidate secondary。该 candidate secondary 在任何一个 replica 中复制 prepare list，当其追赶上来后再通过primary 将其添加为正式的 secondary，然后由 primary 向全局配置管理发送新版本配置，在该配置中将该 candidate secondary 添加为正式的 secondary。</p>
+<p>由于candidate secondary  需要复制所有 prepare list, 所以 recovery 是很耗费资源的。但是对于一个第一次加入 replica group 的 secondary  来说全量同步是在所难免的。但是对于一个以前在该 replica group  的 secondary  (例如由于网络分区、replica 不可用)则完全可以避免全量同步，它只要进行增量同步就可以把自己离线期间的数据补齐。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a target="_blank" rel="noopener" href="https://www.microsoft.com/en-us/research/wp-content/uploads/2008/02/tr-2008-25.pdf">PacificA: Replication in Log-Based Distributed Storage Systems</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/k8s/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/" rel="prev" title="被隔离的容器进程如何进行交互">
+                  <i class="fa fa-chevron-left"></i> 被隔离的容器进程如何进行交互
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/" rel="next" title="ES Lucene marge和 forceMerge 详解">
+                  ES Lucene marge和 forceMerge 详解 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

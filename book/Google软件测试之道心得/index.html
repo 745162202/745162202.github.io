@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="角色定义软件开发工程师 SWE(Software Engineer) ​    软件开发工程师是一个传统上的开发角色，创建设计文档，编写与测试代码包括测试驱动的设计、单元测试、参与构建各种大小规模的测试等。 软件测试开发工程师 SET(Software Engineer in Test) ​    我觉的可以把他理解为产品专家，是一个编码能力很强的程序员，可以写功能代码，同时也是一个能力很强的测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Google软件测试之道心得">
+<meta property="og:url" content="https://745162202.github.io/book/Google%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95%E4%B9%8B%E9%81%93%E5%BF%83%E5%BE%97/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="角色定义软件开发工程师 SWE(Software Engineer) ​    软件开发工程师是一个传统上的开发角色，创建设计文档，编写与测试代码包括测试驱动的设计、单元测试、参与构建各种大小规模的测试等。 软件测试开发工程师 SET(Software Engineer in Test) ​    我觉的可以把他理解为产品专家，是一个编码能力很强的程序员，可以写功能代码，同时也是一个能力很强的测试">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1661382284231-6c1a9f15-e168-497c-a0e7-314695dea511.png">
+<meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-09T14:45:29.472Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1661382284231-6c1a9f15-e168-497c-a0e7-314695dea511.png">
+
+
+<link rel="canonical" href="https://745162202.github.io/book/Google%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95%E4%B9%8B%E9%81%93%E5%BF%83%E5%BE%97/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/book/Google%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95%E4%B9%8B%E9%81%93%E5%BF%83%E5%BE%97/","path":"book/Google软件测试之道心得/","title":"Google软件测试之道心得"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Google软件测试之道心得 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%92%E8%89%B2%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">角色定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Google%E7%9A%84%E6%B5%8B%E8%AF%95%E7%B1%BB%E5%9E%8B%E6%9C%89"><span class="nav-number">2.</span> <span class="nav-text">Google的测试类型有</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E5%9E%8B%E6%B5%8B%E8%AF%95%EF%BC%9A"><span class="nav-number">2.1.</span> <span class="nav-text">小型测试：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E5%9E%8B%E6%B5%8B%E8%AF%95%EF%BC%9A"><span class="nav-number">2.2.</span> <span class="nav-text">中型测试：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%A7%E5%9E%8B%E6%B5%8B%E8%AF%95%EF%BC%9A"><span class="nav-number">2.3.</span> <span class="nav-text">大型测试：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B7%98%E6%B1%B0%E6%89%8B%E5%B7%A5%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B"><span class="nav-number">3.</span> <span class="nav-text">淘汰手工测试用例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%83%E5%BE%97"><span class="nav-number">4.</span> <span class="nav-text">心得</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/book/Google%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95%E4%B9%8B%E9%81%93%E5%BF%83%E5%BE%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Google软件测试之道心得 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Google软件测试之道心得
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">读书笔记</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="角色定义"><a href="#角色定义" class="headerlink" title="角色定义"></a>角色定义</h2><p><strong>软件开发工程师</strong> <strong>SWE</strong><strong>(Software Engineer)</strong></p>
+<p>​    <strong>软件开发工程师</strong>是一个传统上的开发角色，创建设计文档，编写与测试代码包括测试驱动的设计、单元测试、参与构建各种大小规模的测试等。</p>
+<p><strong>软件测试开发工程师 SET(Software Engineer in Test)</strong></p>
+<p>​    <strong>我觉的可以把他理解为产品专家，</strong>是一个编码能力很强的程序员，可以写功能代码，同时也是一个能力很强的测试者，可以测试任何产品，辗转于各个项目组。与软件开发工程师深度合作实际工作内容也会有所重叠，它是在软件中后期进场，进场后会查看所以迭代的设计文档了解当前系统设计，后续审核设计文档并且推进编写测试程序和框架，SET更加关注于质量的提升和测试覆盖率的增加。</p>
+<p><strong>测试工程师 TE(Test Engineer)</strong></p>
+<p>​    测试工程师也称作“用户开发者”，因为 TE 需要站在用户角度了解使用产品，负责端到端测试用例编写，对每一个重要的缺陷都要增加一个测试用例与之对应，并且跟踪推动缺陷修复。测试工程师也需要查看历史的功能设计文档，并且对后续的测试用例模块进行评审。</p>
+<p>​    测试工程师重要品质测试人员不该对测试文档过于珍爱，糟糕的测试用例需要被抛弃，而最后留下来的是更好的测试用例。测试重要的一面是做确认，完成测试计划并且确认，使程序崩溃并不总是测试工程师的目标。以极端的输入数据来测试软件并使之出错这很意义，但更有意义的是用不那么极端的输入，一遍又一遍地测试用以模拟真实的使用场景，确保这些通用条件下软件的运行不会出错。在面试时候Google也会特意寻找这种有正面的测试观的测试人员。</p>
+<p>​    测试工程师还需要对软件风险进行把控，需要通过对失败频率和影响范围对风险进行分析打分，对暴露出来的分险进行用户故事和测试用例的覆盖，如果已经覆盖需要考虑当前测试用例是否足够，是否需要增加额外的测试。</p>
+<span id="more"></span>
+<h2 id="Google的测试类型有"><a href="#Google的测试类型有" class="headerlink" title="Google的测试类型有"></a>Google的测试类型有</h2><h3 id="小型测试："><a href="#小型测试：" class="headerlink" title="小型测试："></a>小型测试：</h3><p>​    使用mock或fake环境，进行小规模的测试编写，确认代码的边界。在代码做了变更后可以快速检测一下尽早发现问题。</p>
+<p>​    mock对象是指对外面依赖的系统的模拟，在运行时刻可以根据假设的需求提供期望的结果。<br>fake 对象是一种虚拟的实现，内部使用了固定的数据或逻辑，只能返回特定 的结果</p>
+<p><strong>优势：</strong> 它们有较小的测试范围，这样可以很容易地做边界场景与错误条件的测试，不依赖外部系统所有的环境下它们都可以可靠快速的运行</p>
+<p>缺点：为了方便模拟，系统之间的接口需要有良好的定义</p>
+<h3 id="中型测试："><a href="#中型测试：" class="headerlink" title="中型测试："></a>中型测试：</h3><p>通常也都是自动化实现的。该测试一般会涉及两个或两个以上，甚至更多模块之间的交互。测试重点在于验证这些“功能近邻区”之间的交互，以及彼此调用时的功能是否正确</p>
+<h3 id="大型测试："><a href="#大型测试：" class="headerlink" title="大型测试："></a>大型测试：</h3><p>​    自动化实现和手动测试，大型测试关注的是所有模块的集成，但更倾向于结果驱动，验证软件是否满足最终用户的需求。</p>
+<p>优势<strong>：</strong>使用真实用户使用场景和实际用户数据，对整体产品质量和数据验证提升，更倾向于结果驱动，验证软件是否满足最终用户的需求，</p>
+<p>劣势：由于对外部系统有严重的依赖，因此它们是有非确定性因素，测试范畴很宽泛，这意味着如果测试运行失败，寻找精准失败根源就会比较困难，测试非常耗时。</p>
+<p>​    下图是书中携带的金字塔形的小中大型测试带来的收益图</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1661382284231-6c1a9f15-e168-497c-a0e7-314695dea511.png" alt="img"></p>
+<h2 id="淘汰手工测试用例"><a href="#淘汰手工测试用例" class="headerlink" title="淘汰手工测试用例"></a>淘汰手工测试用例</h2><p>​    Google公司也非常关注日积月累测试用例会越来越多问题，他们有一个淘汰测试用例进行瘦身指导守则。</p>
+<ul>
+<li>总是通过的测试淘汰，在高优先级的测试都来不及做的时候淘汰低优先级的测试用例 。</li>
+<li>低成本高回报的测试用例添加到自动化测试中。</li>
+<li>把释放出来的时间用于测试自动化、高优先级的测试和探索式测试。</li>
+<li>抛弃可能发生过误报或者行为反常的自动化测试。</li>
+</ul>
+<h2 id="心得"><a href="#心得" class="headerlink" title="心得"></a>心得</h2><p>​    笔者最近接手开发端到端的大小型测试，项目比较重视软件质量体系建设。但是自己对测试这块接触最多的就是软件功能的单元测试（小型测试），没有整体的研究过整个测试的体系。看了《Google软件测试之道》帮我补上了这一块缺失的知识外还揭开了很多心中的疑惑。比如：自己在开发端到端测试时就把写单元测试的思想带路其中想要覆盖所有测试链路，还想把反向用力也集成上去。因为这是小型测试应该做的事情，如果大型测试需支持这些场景需要花费很大的力气，而且在软件新版本的开发中会成为累赘。下面引入原文来看看他对大测试的解释和一个最佳实践的比例：</p>
+<blockquote>
+<p>大型测试是较高层次的操作，如果想要走到特定的代码路径区域是不切实际的，而这一部分却是小型测试的专长。最佳实践 70/20/10原则 分别对应小型测试,中型测试与大型测试分配比例，当然这个比例也不是固定的。</p>
+</blockquote>
+<p>​    我们可以看到最佳实践中小型测试是需要最多测试覆盖的，因为小型测试较少的话开发人员就需要大量的时间消耗在底层代码了解和调试查错中。简单说小型测试用来保证优秀代码的质量、良好的异常处理，可以让刚加入团队的同学也可以安心的写代码；大型测试带来整体产品的质量和数据验证的测试。</p>
+<p>​    最后这篇文章是我自己观点下对书中的内容进行总结，全书内容是比较丰富的感兴趣的可以自行阅读下，里面还包括了采访各路 Google 测试大佬。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/" rel="prev" title="ES Lucene marge和 forceMerge 详解">
+                  <i class="fa fa-chevron-left"></i> ES Lucene marge和 forceMerge 详解
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/elasticsearch/ES%E5%8A%A8%E6%80%81%E9%98%9F%E5%88%97%E8%B0%83%E6%95%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AE%BE%E8%AE%A1/" rel="next" title="ES动态队列调整线程池设计">
+                  ES动态队列调整线程池设计 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

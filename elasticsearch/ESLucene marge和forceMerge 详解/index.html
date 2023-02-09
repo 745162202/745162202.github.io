@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Lucene的机制当内存中有数据的情况下，每 1s 生成一个segment。当segment生成后这个数据就可以被检索到了,segment增多会导致占用文件句柄增加，消耗大量资源，Lucene通过把segment合并来解决这个问题。Lucene通常有三种类型的合并：自动的合并naturalMerge(下文称为 Merge)、手动的forceMerge和forceMergeDeletes。merge">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ES Lucene marge和 forceMerge 详解">
+<meta property="og:url" content="https://745162202.github.io/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="Lucene的机制当内存中有数据的情况下，每 1s 生成一个segment。当segment生成后这个数据就可以被检索到了,segment增多会导致占用文件句柄增加，消耗大量资源，Lucene通过把segment合并来解决这个问题。Lucene通常有三种类型的合并：自动的合并naturalMerge(下文称为 Merge)、手动的forceMerge和forceMergeDeletes。merge">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1671292101381-1ee4309e-865b-4a02-9594-5a7371a73f6d.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1671348888891-13673f09-57f3-4a49-9544-95a24735cfd1.jpeg">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1671548057654-bfd977ae-4070-407f-b3be-d187a2c97832.jpeg">
+<meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-09T14:39:57.901Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1671292101381-1ee4309e-865b-4a02-9594-5a7371a73f6d.png">
+
+
+<link rel="canonical" href="https://745162202.github.io/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/","path":"elasticsearch/ESLucene marge和forceMerge 详解/","title":"ES Lucene marge和 forceMerge 详解"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ES Lucene marge和 forceMerge 详解 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E6%94%BE%E5%A4%A7%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">写放大概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#marge"><span class="nav-number">2.</span> <span class="nav-text">marge</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#7-5-%E5%89%8D"><span class="nav-number">2.1.</span> <span class="nav-text">7.5 前</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E7%A7%BB%E9%99%A4%E4%B8%8D%E5%90%88%E8%A7%84%E7%9A%84-segment"><span class="nav-number">2.1.1.</span> <span class="nav-text">1.移除不合规的 segment</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E9%A2%84%E6%B5%8B%E5%BD%93%E5%89%8D%E5%BA%94%E8%AF%A5%E7%9A%84-segment-%E6%95%B0%E9%87%8F"><span class="nav-number">2.1.2.</span> <span class="nav-text">2.预测当前应该的 segment 数量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E5%AF%BB%E6%89%BE-candidate"><span class="nav-number">2.1.3.</span> <span class="nav-text">3.寻找 candidate</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E7%AE%97%E5%88%86"><span class="nav-number">2.1.4.</span> <span class="nav-text">4.算分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E6%80%A7%E8%83%BD%E8%80%83%E8%99%91"><span class="nav-number">2.1.5.</span> <span class="nav-text">5.性能考虑</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-5-%E5%90%8E%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">2.2.</span> <span class="nav-text">7.5 后的优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%85%81%E8%AE%B8%E5%A4%A7%E6%AE%B5%E5%90%88%E5%B9%B6"><span class="nav-number">2.2.1.</span> <span class="nav-text">1. 允许大段合并</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%AF%BB%E6%89%BE-candidate-%E9%80%BB%E8%BE%91%E5%8F%98%E6%9B%B4"><span class="nav-number">2.2.2.</span> <span class="nav-text">2.寻找 candidate 逻辑变更</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E4%BF%AE%E6%94%B9%E6%80%A7%E8%83%BD%E8%80%83%E8%99%91"><span class="nav-number">2.2.3.</span> <span class="nav-text">3. 修改性能考虑</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#forceMerge"><span class="nav-number">3.</span> <span class="nav-text">forceMerge</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#7-5-%E5%89%8D-1"><span class="nav-number">3.1.</span> <span class="nav-text">7.5 前</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-5"><span class="nav-number">3.2.</span> <span class="nav-text">7.5</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">总结：</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ES Lucene marge和 forceMerge 详解 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ES Lucene marge和 forceMerge 详解
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/elasticsearch/" itemprop="url" rel="index"><span itemprop="name">elasticsearch</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><code>Lucene</code>的机制当内存中有数据的情况下，每 <code>1s</code> 生成一个<code>segment</code>。当<code>segment</code>生成后这个数据就可以被检索到了,<code>segment</code>增多会导致占用文件句柄增加，消耗大量资源，<code>Lucene</code>通过把<code>segment</code>合并来解决这个问题。<code>Lucene</code>通常有三种类型的合并：自动的合并<code>naturalMerge(下文称为 Merge)</code>、手动的<code>forceMerge</code>和<code>forceMergeDeletes</code>。<code>merge</code>是<code>ES</code>为了提升查询性能、回收已经被删除的<code>doc</code>，在后台定期调度的<code>merge</code>操作。对索引的任何增删改操作都有可能触发<code>merge</code>。而<code>forceMerge</code>手动触发的<code>merge</code>操作，目的是减少 <code>segment</code> 数量和回收已经被删除的 <code>doc</code>，提升查询性能，<code>forceMerge</code>比较暴力最好是在索引为只读状态后使用。<code>forceMergeDeletes</code>合并存在删除的内容占10%以上的<code>segment</code>。</p>
+<span id="more"></span>
+<p>es 和 lucene 版本关系</p>
+<table>
+<thead>
+<tr>
+<th>es</th>
+<th>lucene</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>5.5.3</td>
+<td>6.6.0</td>
+</tr>
+<tr>
+<td>6.2.2</td>
+<td>7.2.1</td>
+</tr>
+<tr>
+<td>6.8.13</td>
+<td>7.7.3</td>
+</tr>
+<tr>
+<td>7.10</td>
+<td>8.7.0</td>
+</tr>
+</tbody></table>
+<p>下面我们来详细了解要 <code>marge</code>，<code>lucene</code> 默认使用 <code>tieredMergePolicy</code>，<code>tieredMergePolicy</code> 在 <code>lucene 7.5</code> 进行一系列变动，</p>
+<p> Fix Version:7.5, 8.0</p>
+<p><a target="_blank" rel="noopener" href="https://issues.apache.org/jira/browse/LUCENE-7976">https://issues.apache.org/jira/browse/LUCENE-7976</a></p>
+<p><a target="_blank" rel="noopener" href="https://issues.apache.org/jira/browse/LUCENE-8263">https://issues.apache.org/jira/browse/LUCENE-8263</a></p>
+<p>Fix Version: 7.7.2, 8.1, 9.0</p>
+<p><a target="_blank" rel="noopener" href="https://issues.apache.org/jira/browse/LUCENE-8688">https://issues.apache.org/jira/browse/LUCENE-8688</a>  </p>
+<p>读完这篇文章你将知道：</p>
+<ol>
+<li>自动的 marge 时如何运行的？</li>
+<li>为什么不推荐还在写入的索引进行 forceMarge？</li>
+<li>为什么有时又执行 forceMarge 不成功？</li>
+</ol>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=YW0bOvLp72E&t=82s">lucene merges 可视化视频</a></p>
+<h2 id="写放大概念"><a href="#写放大概念" class="headerlink" title="写放大概念"></a>写放大概念</h2><p>​    文中的写放大不是指 <code>SSD</code> 写小文件存在写放大大的问题。 <code>lucene</code> 还是亲和<code>SSD</code>的因为他是顺序写的。文中的写放大是指<code>lucene</code>的定期对没有到最大大小的<code>segment</code>进行合并，当<code>segment</code>被写入后在他的生命周期里可能被复制 4-5 次生成新的<code>segment</code>。</p>
+<h2 id="marge"><a href="#marge" class="headerlink" title="marge"></a>marge</h2><h3 id="7-5-前"><a href="#7-5-前" class="headerlink" title="7.5 前"></a>7.5 前</h3><h4 id="1-移除不合规的-segment"><a href="#1-移除不合规的-segment" class="headerlink" title="1.移除不合规的 segment"></a>1.移除不合规的 segment</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">segment` 大小大于等于`2.5GB`就没有进行合并的资格，这个导致一个问题，这可能会导致最高`50%`的磁盘空间的浪费。他需要删除后该`segment` 的大小小于`2.5GB</span><br><span class="line">private long maxMergedSegmentBytes = 5*1024*1024*1024L;</span><br><span class="line">public MergeSpecification findMerges(MergeTrigger mergeTrigger, SegmentInfos infos, MergeContext mergeContext) throws IOException &#123;</span><br><span class="line">	...</span><br><span class="line">    Map&lt;SegmentCommitInfo,Long&gt; sizeInBytes = getSegmentSizes(mergeContext, infos.asList());</span><br><span class="line">    // 对所有的段根据上面计算的大小进行降序排序</span><br><span class="line">    infosSorted.sort(new SegmentByteSizeDescending(sizeInBytes));</span><br><span class="line">    ...</span><br><span class="line">    // tooBigCount 指向第一个段大小小于maxMergedSegmentBytes/2.0的段</span><br><span class="line">    // totIndexBytes的值是除去段大小大于maxMergedSegmentBytes/2.0的段的总大小</span><br><span class="line">    // 将段的大小大于等于maxMergedSegmentBytes/2.0移除</span><br><span class="line">	while (tooBigCount &lt; infosSorted.size()) &#123;</span><br><span class="line">      long segBytes = sizeInBytes.get(infosSorted.get(tooBigCount));</span><br><span class="line">      // 超过 5GB 的一半就不合并</span><br><span class="line">      if (segBytes &lt; maxMergedSegmentBytes/2.0) &#123;</span><br><span class="line">        break;</span><br><span class="line">      &#125;</span><br><span class="line">      totIndexBytes -= segBytes;</span><br><span class="line">      tooBigCount++;</span><br><span class="line">    &#125;</span><br><span class="line">	...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-预测当前应该的-segment-数量"><a href="#2-预测当前应该的-segment-数量" class="headerlink" title="2.预测当前应该的 segment 数量"></a>2.预测当前应该的 segment 数量</h4><p>​    下面这段代码很有意思，估算当前没有超出2.5G的 <code>segment</code> 数量， 作为本次是否需要 <code>marge</code> 的条件</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> MergeSpecification <span class="title function_">findMerges</span><span class="params">(MergeTrigger mergeTrigger, SegmentInfos infos, MergeContext mergeContext)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 参数floorSegmentBytes的默认值是2M，如果最小的 segment 大于 2m，那么就是最小的 segemtn作为值</span></span><br><span class="line">    minSegmentBytes = floorSize(minSegmentBytes);</span><br><span class="line">    <span class="comment">// floorSegmentBytes的默认值是2M</span></span><br><span class="line">    <span class="type">long</span> <span class="variable">levelSize</span> <span class="operator">=</span> minSegmentBytes;</span><br><span class="line">    <span class="comment">//除去段大小大于maxMergedSegmentBytes/2.0的段的总大小</span></span><br><span class="line">    <span class="type">long</span> <span class="variable">bytesLeft</span> <span class="operator">=</span> totIndexBytes;</span><br><span class="line">    <span class="comment">// 10 个 2mb 10个 20mb。。依次类推</span></span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>) &#123;</span><br><span class="line">      <span class="keyword">final</span> <span class="type">double</span> <span class="variable">segCountLevel</span> <span class="operator">=</span> bytesLeft / (<span class="type">double</span>) levelSize;</span><br><span class="line">      <span class="comment">// segsPerTier 10</span></span><br><span class="line">      <span class="keyword">if</span> (segCountLevel &lt; segsPerTier) &#123;</span><br><span class="line">        <span class="comment">// 向上取整</span></span><br><span class="line">        allowedSegCount += Math.ceil(segCountLevel);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 10</span></span><br><span class="line">      allowedSegCount += segsPerTier;</span><br><span class="line">      <span class="comment">// 2 * 10</span></span><br><span class="line">      bytesLeft -= segsPerTier * levelSize;</span><br><span class="line">      levelSize *= maxMergeAtOnce;</span><br><span class="line">    &#125;</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1671292101381-1ee4309e-865b-4a02-9594-5a7371a73f6d.png" alt="img"></p>
+<p>​    对<code>segment</code>索引刷新间隔的更改可能会导致<code>minSegmentBytes</code>非常高，会使这个算法中<code>allowedSegCountInt</code>变小导致大量合并进行。</p>
+<p>大的<code>segment</code>并不会影响这个算法，两边比较的时候都会去除当前大于<code>2.5G</code>的 <code>segment</code>。</p>
+<p>但是大的 <code>segment</code>（5G左右） 不太容易被 <code>marge</code>合并，除非他的除去<code>delCount</code>大小小于<code>2.5G</code> 的时候，<code>marge</code> 才会对他进行合并，这样就有可能导致最大会浪费<code>50%</code>的存储空间。如果误操作执行过<code>forceMorege</code>那么这段<code>segement</code>的空间浪费可能超过<code>50%</code>，而且<code>forceMorge</code>不可逆，你需要重建索引来解决这个问题。</p>
+<h4 id="3-寻找-candidate"><a href="#3-寻找-candidate" class="headerlink" title="3.寻找 candidate"></a>3.寻找 candidate</h4><p>​    接下来寻找合适的<code>segment列表</code>（candidate）,他是从最大的<code>segment</code>开始并尝试找到 N 个段（其中N &lt; max_merge_at_once（10）），但是这个<code>candidate</code>不能大于 <code>max_merged_segment</code> （5G）。简单通过下图来介绍下他的逻辑，首先<code>编号1</code>大于<code>2.5G</code>会被移除无法进行合并的资格，然后编号二和编号三可以组成一个<code>4G</code>的<code>candidate</code>，但是加上<code>编号4</code>他就超过<code>5G</code>的限制了那么他不会加入这个<code>candidate</code>，而是继续往后寻找当找到编号五发现没有超过<code>5G</code>把他加入到<code>candidate</code>中,后面依次类推最后它的大小会逐渐趋于<code>5G</code>或者到达<code>max_merge_at_once</code>的限制。这个 <code>candidate</code> 就会进入一个算分算法的逻辑，得分越低的 <code>candidate</code> 才会被 <code>merge</code> </p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1671348888891-13673f09-57f3-4a49-9544-95a24735cfd1.jpeg" alt="img"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"> 	<span class="comment">// 只有eligible的大小大于allowedSegCountInt，才会选取OneMerge</span></span><br><span class="line">   <span class="keyword">if</span> (eligible.size() &gt; allowedSegCountInt) &#123;</span><br><span class="line">       ...</span><br><span class="line">       <span class="comment">// 依次遍历eligible，选取candidate</span></span><br><span class="line">       <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">startIdx</span> <span class="operator">=</span> <span class="number">0</span>;startIdx &lt;= eligible.size()-maxMergeAtOnce; startIdx++) &#123;</span><br><span class="line"></span><br><span class="line">         <span class="type">long</span> <span class="variable">totAfterMergeBytes</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">         <span class="keyword">final</span> List&lt;SegmentCommitInfo&gt; candidate = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">         <span class="type">boolean</span> <span class="variable">hitTooLarge</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">         <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">idx</span> <span class="operator">=</span> startIdx;idx&lt;eligible.size() &amp;&amp; candidate.size() &lt; maxMergeAtOnce;idx++) &#123;</span><br><span class="line">           <span class="keyword">final</span> <span class="type">SegmentCommitInfo</span> <span class="variable">info</span> <span class="operator">=</span> eligible.get(idx);</span><br><span class="line">           <span class="keyword">final</span> <span class="type">long</span> <span class="variable">segBytes</span> <span class="operator">=</span> sizeInBytes.get(info);</span><br><span class="line">           <span class="comment">// 如果candidate中段的总大小加上当前段的大小大于maxMergedSegmentBytes，并且添加命中大段标识</span></span><br><span class="line">           <span class="keyword">if</span> (totAfterMergeBytes + segBytes &gt; maxMergedSegmentBytes) &#123;</span><br><span class="line">             hitTochuoLarge = <span class="literal">true</span>;</span><br><span class="line">             <span class="comment">// <span class="doctag">NOTE:</span> we continue, so that we can try</span></span><br><span class="line">             <span class="comment">// &quot;packing&quot; smaller segments into this merge</span></span><br><span class="line">             <span class="comment">// to see if we can get closer to the max</span></span><br><span class="line">             <span class="comment">// size; this in general is not perfect since</span></span><br><span class="line">             <span class="comment">// this is really &quot;bin packing&quot; and we&#x27;d have</span></span><br><span class="line">             <span class="comment">// to try different permutations.</span></span><br><span class="line">             <span class="keyword">continue</span>;</span><br><span class="line">           &#125;</span><br><span class="line">           candidate.add(info);</span><br><span class="line">           totAfterMergeBytes += segBytes;</span><br><span class="line">         &#125;</span><br><span class="line"></span><br><span class="line">         <span class="comment">// We should never see an empty candidate: we iterated over maxMergeAtOnce</span></span><br><span class="line">         <span class="comment">// segments, and already pre-excluded the too-large segments:</span></span><br><span class="line">         <span class="keyword">assert</span> candidate.size() &gt; <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">         <span class="keyword">final</span> <span class="type">MergeScore</span> <span class="variable">score</span> <span class="operator">=</span> score(candidate, hitTooLarge, sizeInBytes);</span><br><span class="line">         ...</span><br><span class="line">       &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="4-算分"><a href="#4-算分" class="headerlink" title="4.算分"></a>4.算分</h4><p>算分规则</p>
+<ul>
+<li>如果组合大小&lt;10个，说明是总大小到达 <code>5G</code> 才中断的，这样<code>skew = 1/10</code>,倾斜度最小，应为他已经是最优解了。若组合数=10个，<code>skew = 第一个segment（最大值）/(需要删除的文档+不需要删除的文档)</code>，<code>1/10&lt;skew&lt;1 </code>，段大小差异越大，skew值越大</li>
+<li>skew = skew*（合并后的大小^0.05）我们稍微倾向于合并小的端，原因：稍微提高源源不断的产生小段合并的概率</li>
+<li>mergescore = skew *[合并后的大小/(合并前的大小)]^2：说明<code>merge</code>的段中包含越多的被删除的段，score越小。</li>
+</ul>
+<p>把三个得分相乘，最小的会被 merge</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> MergeScore <span class="title function_">score</span><span class="params">(List&lt;SegmentCommitInfo&gt; candidate, <span class="type">boolean</span> hitTooLarge, Map&lt;SegmentCommitInfo, Long&gt; sizeInBytes)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">    <span class="type">long</span> <span class="variable">totBeforeMergeBytes</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="type">long</span> <span class="variable">totAfterMergeBytes</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="type">long</span> <span class="variable">totAfterMergeBytesFloored</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(SegmentCommitInfo info : candidate) &#123;</span><br><span class="line">        <span class="keyword">final</span> <span class="type">long</span> <span class="variable">segBytes</span> <span class="operator">=</span> sizeInBytes.get(info);</span><br><span class="line">        totAfterMergeBytes += segBytes;</span><br><span class="line">        totAfterMergeBytesFloored += floorSize(segBytes);</span><br><span class="line">        totBeforeMergeBytes += info.sizeInBytes();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Roughly measure &quot;skew&quot; of the merge, i.e. how</span></span><br><span class="line">    <span class="comment">// &quot;balanced&quot; the merge is (whether the segments are</span></span><br><span class="line">    <span class="comment">// about the same size), which can range from</span></span><br><span class="line">    <span class="comment">// 1.0/numSegsBeingMerged (good) to 1.0 (poor). Heavily</span></span><br><span class="line">    <span class="comment">// lopsided merges (skew near 1.0) is no good; it means</span></span><br><span class="line">    <span class="comment">// O(N^2) merge cost over time:</span></span><br><span class="line">    <span class="keyword">final</span> <span class="type">double</span> skew;</span><br><span class="line">    <span class="comment">// 出发过大段，超过 5G</span></span><br><span class="line">    <span class="keyword">if</span> (hitTooLarge) &#123;</span><br><span class="line">        <span class="comment">// Pretend the merge has perfect skew; skew doesn&#x27;t</span></span><br><span class="line">        <span class="comment">// matter in this case because this merge will not</span></span><br><span class="line">        <span class="comment">// &quot;cascade&quot; and so it cannot lead to N^2 merge cost</span></span><br><span class="line">        <span class="comment">// over time:</span></span><br><span class="line">        <span class="comment">// 大段优先斜率是最低的，其实就是1/10</span></span><br><span class="line">        skew = <span class="number">1.0</span>/maxMergeAtOnce;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 最大值/(需要删除的文档+不需要删除的文档)，1/10&lt;skew&lt;1 ，段大小差异越大，skew值越大</span></span><br><span class="line">        skew = ((<span class="type">double</span>) floorSize(sizeInBytes.get(candidate.get(<span class="number">0</span>))))/totAfterMergeBytesFloored;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Strongly favor merges with less skew (smaller</span></span><br><span class="line">    <span class="comment">// mergeScore is better):</span></span><br><span class="line">    <span class="type">double</span> <span class="variable">mergeScore</span> <span class="operator">=</span> skew;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Gently favor smaller merges over bigger ones.  We</span></span><br><span class="line">    <span class="comment">// don&#x27;t want to make this exponent too large else we</span></span><br><span class="line">    <span class="comment">// can end up doing poor merges of small segments in</span></span><br><span class="line">    <span class="comment">// order to avoid the large merges:</span></span><br><span class="line">    <span class="comment">// 稍微倾斜合并小段，不想指数太大，否则将出现不会合并大段的情况</span></span><br><span class="line">    mergeScore *= Math.pow(totAfterMergeBytes, <span class="number">0.05</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Strongly favor merges that reclaim deletes:</span></span><br><span class="line">    <span class="keyword">final</span> <span class="type">double</span> <span class="variable">nonDelRatio</span> <span class="operator">=</span> ((<span class="type">double</span>) totAfterMergeBytes)/totBeforeMergeBytes;</span><br><span class="line">    <span class="comment">// 删除的越多，得分越小, 越是优先合并</span></span><br><span class="line">    mergeScore *= Math.pow(nonDelRatio, <span class="number">2.0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> <span class="type">double</span> <span class="variable">finalMergeScore</span> <span class="operator">=</span> mergeScore;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">MergeScore</span>() &#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">double</span> <span class="title function_">getScore</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> finalMergeScore;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> String <span class="title function_">getExplanation</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;skew=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f&quot;</span>, skew) + <span class="string">&quot; nonDelRatio=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f&quot;</span>, nonDelRatio);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="5-性能考虑"><a href="#5-性能考虑" class="headerlink" title="5.性能考虑"></a>5.性能考虑</h4><p>​    本次<code>candidate</code>已经至少超出一次<code>5G</code>属于大段，并且当前系统中的 <code>margeing</code> 超过<code>5G</code>会取消本次 <code>merge</code>。但是本次是小段（candidate 没有超出过一次 5G 定义为小段）还是会正常执行的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="literal">true</span>) &#123;</span><br><span class="line">	<span class="keyword">if</span> (eligible.size() &gt; allowedSegCountInt) &#123;</span><br><span class="line">		<span class="comment">// 依次遍历eligible，选取candidate</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">startIdx</span> <span class="operator">=</span> <span class="number">0</span>;startIdx &lt;= eligible.size()-maxMergeAtOnce; startIdx++) &#123;</span><br><span class="line">          <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">idx</span> <span class="operator">=</span> startIdx;idx&lt;eligible.size() &amp;&amp; candidate.size() &lt; maxMergeAtOnce;idx++) &#123;</span><br><span class="line">              <span class="keyword">final</span> <span class="type">MergeScore</span> <span class="variable">score</span> <span class="operator">=</span> score(candidate, hitTooLarge, sizeInBytes);</span><br><span class="line">              <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">                message(<span class="string">&quot;  maybe=&quot;</span> + segString(mergeContext, candidate) + <span class="string">&quot; score=&quot;</span> + score.getScore() + <span class="string">&quot; &quot;</span> + score.getExplanation() + <span class="string">&quot; tooLarge=&quot;</span> + hitTooLarge + <span class="string">&quot; size=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f MB&quot;</span>, totAfterMergeBytes/<span class="number">1024.</span>/<span class="number">1024.</span>), mergeContext);</span><br><span class="line">              &#125;</span><br><span class="line">    </span><br><span class="line">              <span class="comment">// If we are already running a max sized merge</span></span><br><span class="line">              <span class="comment">// (maxMergeIsRunning), don&#x27;t allow another max</span></span><br><span class="line">              <span class="comment">// sized merge to kick off:</span></span><br><span class="line">              <span class="comment">// (bestScore == null || score.getScore() &lt; bestScore.getScore()) 很好理解第一次不比较分数，第二次会比较谁的分数低</span></span><br><span class="line">              <span class="comment">//  (!hitTooLarge || !maxMergeIsRunning) hitTooLarge为true 说明本次 candidate 已经至少超出一次5G 属于大段</span></span><br><span class="line">              <span class="comment">// maxMergeIsRunning为true是当前 mergeing 中的大小也超过5G，这种情况下为了性能考虑不进行任何morge</span></span><br><span class="line">              <span class="keyword">if</span> ((bestScore == <span class="literal">null</span> || score.getScore() &lt; bestScore.getScore()) &amp;&amp; (!hitTooLarge || !maxMergeIsRunning)) &#123;</span><br><span class="line">                best = candidate;</span><br><span class="line">                bestScore = score;</span><br><span class="line">                bestTooLarge = hitTooLarge;</span><br><span class="line">                bestMergeBytes = totAfterMergeBytes;</span><br><span class="line">              &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="keyword">if</span> (best != <span class="literal">null</span>) &#123;</span><br><span class="line">          <span class="keyword">if</span> (spec == <span class="literal">null</span>) &#123;</span><br><span class="line">            spec = <span class="keyword">new</span> <span class="title class_">MergeSpecification</span>();</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">final</span> <span class="type">OneMerge</span> <span class="variable">merge</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OneMerge</span>(best);</span><br><span class="line">          spec.add(merge);</span><br><span class="line">          toBeMerged.addAll(merge.segments);</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">            message(<span class="string">&quot;  add merge=&quot;</span> + segString(mergeContext, merge.segments) + <span class="string">&quot; size=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f MB&quot;</span>, bestMergeBytes/<span class="number">1024.</span>/<span class="number">1024.</span>) + <span class="string">&quot; score=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f&quot;</span>, bestScore.getScore()) + <span class="string">&quot; &quot;</span> + bestScore.getExplanation() + (bestTooLarge ? <span class="string">&quot; [max merge]&quot;</span> : <span class="string">&quot;&quot;</span>), mergeContext);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> spec;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> spec;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">            </span><br><span class="line">    </span><br><span class="line">        </span><br></pre></td></tr></table></figure>
+
+<h3 id="7-5-后的优化"><a href="#7-5-后的优化" class="headerlink" title="7.5 后的优化"></a>7.5 后的优化</h3><h4 id="1-允许大段合并"><a href="#1-允许大段合并" class="headerlink" title="1. 允许大段合并"></a>1. 允许大段合并</h4><p>​    在 7.5里面除了原来小于 <code>5G</code> 会合并， 如果满足总体删除占比大于 33% 或者当前 <code>segment</code> 删除占比大于<code>33%</code>之一也会进行合并。为什么选择这个<code>33%</code> 呢，看下图：不同比例下的，写放大倍数，当删除占比30%时写放大值不在有很大的变化。</p>
+<table>
+<thead>
+<tr>
+<th>Max percentage of deletes</th>
+<th>Max merged segment = 5GB</th>
+<th>Max merged segment = 1TB (never reached)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10%</td>
+<td>6.2</td>
+<td>8.6</td>
+</tr>
+<tr>
+<td>20%</td>
+<td>4.7</td>
+<td>5.7</td>
+</tr>
+<tr>
+<td>30%</td>
+<td>4.3</td>
+<td>4.7</td>
+</tr>
+<tr>
+<td>40%</td>
+<td>4.3</td>
+<td>4.4</td>
+</tr>
+<tr>
+<td>50%</td>
+<td>4.3</td>
+<td>4.6</td>
+</tr>
+</tbody></table>
+<p>代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="type">long</span> <span class="variable">maxMergedSegmentBytes</span> <span class="operator">=</span> <span class="number">5</span>*<span class="number">1024</span>*<span class="number">1024</span>*<span class="number">1024L</span>;</span><br><span class="line">   <span class="keyword">private</span> <span class="type">double</span> <span class="variable">deletesPctAllowed</span> <span class="operator">=</span> <span class="number">33.0</span>;</span><br><span class="line"><span class="keyword">public</span> MergeSpecification <span class="title function_">findMerges</span><span class="params">()</span> &#123;</span><br><span class="line">       <span class="comment">// 总删除比例， merging  segement 只记录 （maxDoc - delCount）</span></span><br><span class="line">       <span class="keyword">final</span> <span class="type">double</span> <span class="variable">totalDelPct</span> <span class="operator">=</span> <span class="number">100</span> * (<span class="type">double</span>) totalDelDocs / totalMaxDoc;</span><br><span class="line">   	<span class="comment">// remove large segments from consideration under two conditions.</span></span><br><span class="line">       <span class="comment">// 1&gt; Overall percent deleted docs relatively small and this segment is larger than 50% maxSegSize</span></span><br><span class="line">       <span class="comment">// 2&gt; overall percent deleted docs large and this segment is large and has few deleted docs</span></span><br><span class="line">   </span><br><span class="line">       <span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">         <span class="type">SegmentSizeAndDocs</span> <span class="variable">segSizeDocs</span> <span class="operator">=</span> iter.next();</span><br><span class="line">         <span class="comment">// 获取 segemnt 删除占的比例</span></span><br><span class="line">         <span class="type">double</span> <span class="variable">segDelPct</span> <span class="operator">=</span> <span class="number">100</span> * (<span class="type">double</span>) segSizeDocs.delCount / (<span class="type">double</span>) segSizeDocs.maxDoc;</span><br><span class="line">         </span><br><span class="line">         <span class="keyword">if</span> (segSizeDocs.sizeInBytes &gt; maxMergedSegmentBytes / <span class="number">2</span> &amp;&amp; (totalDelPct &lt;= deletesPctAllowed || segDelPct &lt;= deletesPctAllowed)) &#123;</span><br><span class="line">           iter.remove();</span><br><span class="line">           tooBigCount++; <span class="comment">// Just for reporting purposes.</span></span><br><span class="line">           totIndexBytes -= segSizeDocs.sizeInBytes;</span><br><span class="line">           allowedDelCount -= segSizeDocs.delCount;</span><br><span class="line">         &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-寻找-candidate-逻辑变更"><a href="#2-寻找-candidate-逻辑变更" class="headerlink" title="2.寻找 candidate 逻辑变更"></a>2.寻找 candidate 逻辑变更</h4><p>7.4的逻辑基本不变在 7.5 中<code>segment</code> 删除占比大于<code>33%</code>也可以参与合并而且优先度还是很高的。</p>
+<p>多了两种场景：</p>
+<ol>
+<li>第一场景<code>编号1</code>因为大于<code>2.5G</code>且删除率没有到33%没有参加 <code>candidate</code>的资格，<code>编号2</code>删除率达到了33% 且是 <code>candidate</code> 中的第一个那么后面就都不要找了，先把这个大段去算分。</li>
+<li>第二场景<code>编号2</code>满足小于<code>2.5G</code>进入 <code>candidate</code>，<code>编号3</code>因为不是<code>candidate</code>第一个所以这次合并没有他。他需要等到第二轮循环的时候才能加入新的 <code>candidate</code> 然后去算分。该轮还是正常往下加入<code>编号4</code>和<code>编号5</code></li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/1671548057654-bfd977ae-4070-407f-b3be-d187a2c97832.jpeg" alt="img"></p>
+<h4 id="3-修改性能考虑"><a href="#3-修改性能考虑" class="headerlink" title="3. 修改性能考虑"></a>3. 修改性能考虑</h4><p>7.4 前是系统中的 <code>margeing</code> 超过<code>5G</code>会取消本次 <code>merge</code>。当前需要支持大的 <code>segment merge</code>，可能 <code>margeing</code>  没有超过 5G，但是本次合并有多个大的 <code>segment merge</code>，对这个场景进行代码的修改。</p>
+<p>除了 FORCE_MERGE_DELETES， 若已经有大于<code>5G</code>的段待合并了，本轮又选择了大的 <code>segment merge</code>，必须避免该情况, 否则将会产生一大推大段合并。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Gather eligible segments for merging, ie segments</span></span><br><span class="line">  <span class="comment">// not already being merged and not already picked (by</span></span><br><span class="line">  <span class="comment">// prior iteration of this loop) for merging:</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Remove ineligible segments. These are either already being merged or already picked by prior iterations</span></span><br><span class="line">  <span class="comment">// 删除不合格的片段。 这些要么已经被合并，要么已经被先前的迭代选中</span></span><br><span class="line">  Iterator&lt;SegmentSizeAndDocs&gt; iter = sortedEligible.iterator();</span><br><span class="line">  <span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">    <span class="type">SegmentSizeAndDocs</span> <span class="variable">segSizeDocs</span> <span class="operator">=</span> iter.next();</span><br><span class="line">    <span class="keyword">if</span> (toBeMerged.contains(segSizeDocs.segInfo)) &#123;</span><br><span class="line">      iter.remove();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">    message(<span class="string">&quot;  allowedSegmentCount=&quot;</span> + allowedSegCount + <span class="string">&quot; vs count=&quot;</span> + originalSortedSize + <span class="string">&quot; (eligible count=&quot;</span> + sortedEligible.size() + <span class="string">&quot;)&quot;</span>, mergeContext);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (sortedEligible.size() == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="comment">// spec = null</span></span><br><span class="line">    <span class="keyword">return</span> spec;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果合并类型是 NATURAL，</span></span><br><span class="line">  <span class="comment">// 当需要处理的段小于允许的分段数量和剩余删除的文档小于允许删除文档阈值，</span></span><br><span class="line">  <span class="comment">// 则这批次合并选择结束</span></span><br><span class="line">  <span class="keyword">final</span> <span class="type">int</span> <span class="variable">remainingDelCount</span> <span class="operator">=</span> sortedEligible.stream().mapToInt(c -&gt; c.delCount).sum();</span><br><span class="line">  <span class="keyword">if</span> (mergeType == MERGE_TYPE.NATURAL &amp;&amp;</span><br><span class="line">      sortedEligible.size() &lt;= allowedSegCount &amp;&amp;</span><br><span class="line">      remainingDelCount &lt;= allowedDelCount) &#123;</span><br><span class="line">    <span class="comment">// spec = null</span></span><br><span class="line">    <span class="keyword">return</span> spec;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// OK we are over budget -- find best merge!</span></span><br><span class="line">  <span class="type">MergeScore</span> <span class="variable">bestScore</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">  List&lt;SegmentCommitInfo&gt; best = <span class="literal">null</span>;</span><br><span class="line">  <span class="type">boolean</span> <span class="variable">bestTooLarge</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">  <span class="type">long</span> <span class="variable">bestMergeBytes</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">  <span class="comment">// mergeFactor 一次合并的段的数量</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">startIdx</span> <span class="operator">=</span> <span class="number">0</span>; startIdx &lt; sortedEligible.size(); startIdx++) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> <span class="variable">totAfterMergeBytes</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> List&lt;SegmentCommitInfo&gt; candidate = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">hitTooLarge</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="type">long</span> <span class="variable">bytesThisMerge</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// bytesThisMerge &lt; maxMergedSegmentBytes 处理大合并，如果已经是大合并就不往下循环了</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">idx</span> <span class="operator">=</span> startIdx; idx &lt; sortedEligible.size() &amp;&amp; candidate.size() &lt; mergeFactor &amp;&amp; bytesThisMerge &lt; maxMergedSegmentBytes; idx++) &#123;</span><br><span class="line">      <span class="keyword">final</span> <span class="type">SegmentSizeAndDocs</span> <span class="variable">segSizeDocs</span> <span class="operator">=</span> sortedEligible.get(idx);</span><br><span class="line">      <span class="keyword">final</span> <span class="type">long</span> <span class="variable">segBytes</span> <span class="operator">=</span> segSizeDocs.sizeInBytes;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (totAfterMergeBytes + segBytes &gt; maxMergedSegmentBytes) &#123;</span><br><span class="line">        <span class="comment">// 超过最大限制值时，将此次合并定义为超大合并</span></span><br><span class="line">        hitTooLarge = <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">if</span> (candidate.size() == <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="comment">// We should never have something coming in that _cannot_ be merged, so handle singleton merges</span></span><br><span class="line">          candidate.add(segSizeDocs.segInfo);</span><br><span class="line">          bytesThisMerge += segBytes;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// <span class="doctag">NOTE:</span> we continue, so that we can try</span></span><br><span class="line">        <span class="comment">// &quot;packing&quot; smaller segments into this merge</span></span><br><span class="line">        <span class="comment">// to see if we can get closer to the max</span></span><br><span class="line">        <span class="comment">// size; this in general is not perfect since</span></span><br><span class="line">        <span class="comment">// this is really &quot;bin packing&quot; and we&#x27;d have</span></span><br><span class="line">        <span class="comment">// to try different permutations.</span></span><br><span class="line">        <span class="comment">//我们继续，以便我们可以尝试将较小的段“打包”到此合并中，</span></span><br><span class="line">        <span class="comment">// 看看我们是否可以接近最大大小； 这通常并不完美，</span></span><br><span class="line">        <span class="comment">// 因为这实际上是“装箱”，我们必须尝试不同的排列。</span></span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      candidate.add(segSizeDocs.segInfo);</span><br><span class="line">      bytesThisMerge += segBytes;</span><br><span class="line">      totAfterMergeBytes += segBytes;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// We should never see an empty candidate: we iterated over maxMergeAtOnce</span></span><br><span class="line">    <span class="comment">// segments, and already pre-excluded the too-large segments:</span></span><br><span class="line">    <span class="keyword">assert</span> candidate.size() &gt; <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// A singleton merge with no deletes makes no sense. We can get here when forceMerge is looping around...</span></span><br><span class="line">    <span class="comment">// 单例的合并如果不处理删除标识的文档，那么意义不大，当执行forceMerge时可以触发这个循环</span></span><br><span class="line">    <span class="keyword">if</span> (candidate.size() == <span class="number">1</span>) &#123;</span><br><span class="line">      <span class="type">SegmentSizeAndDocs</span> <span class="variable">segSizeDocs</span> <span class="operator">=</span> segInfosSizes.get(candidate.get(<span class="number">0</span>));</span><br><span class="line">      <span class="keyword">if</span> (segSizeDocs.delCount == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If we didn&#x27;t find a too-large merge and have a list of candidates</span></span><br><span class="line">    <span class="comment">// whose length is less than the merge factor, it means we are reaching</span></span><br><span class="line">    <span class="comment">// the tail of the list of segments and will only find smaller merges.</span></span><br><span class="line">    <span class="comment">// Stop here.</span></span><br><span class="line">    <span class="comment">// 如果我们没有找到一个太大的 segment 当前 candidate 小于预期的 merge 大小</span></span><br><span class="line">    <span class="comment">// 此轮寻找需要segment merge 已经结束了不需要再往下循环了</span></span><br><span class="line">    <span class="keyword">if</span> (bestScore != <span class="literal">null</span> &amp;&amp;</span><br><span class="line">        hitTooLarge == <span class="literal">false</span> &amp;&amp;</span><br><span class="line">        candidate.size() &lt; mergeFactor) &#123;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对此次寻找的结果进行打分</span></span><br><span class="line">    <span class="keyword">final</span> <span class="type">MergeScore</span> <span class="variable">score</span> <span class="operator">=</span> score(candidate, hitTooLarge, segInfosSizes);</span><br><span class="line">    <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">      message(<span class="string">&quot;  maybe=&quot;</span> + segString(mergeContext, candidate) + <span class="string">&quot; score=&quot;</span> + score.getScore() + <span class="string">&quot; &quot;</span> + score.getExplanation() + <span class="string">&quot; tooLarge=&quot;</span> + hitTooLarge + <span class="string">&quot; size=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f MB&quot;</span>, totAfterMergeBytes/<span class="number">1024.</span>/<span class="number">1024.</span>), mergeContext);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// forceMergeDeletes forceMerge 类型情况下 maxMergeIsRunning false,  forceMergeDeletes forceMerge 会尝试给超大的合并打分</span></span><br><span class="line">    <span class="keyword">if</span> ((bestScore == <span class="literal">null</span> || score.getScore() &lt; bestScore.getScore()) &amp;&amp; (!hitTooLarge || !maxMergeIsRunning)) &#123;</span><br><span class="line">      best = candidate;</span><br><span class="line">      bestScore = score;</span><br><span class="line">      bestTooLarge = hitTooLarge;</span><br><span class="line">      bestMergeBytes = totAfterMergeBytes;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (best == <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> spec;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// The mergeType == FORCE_MERGE_DELETES behaves as the code does currently and can create a large number of</span></span><br><span class="line">  <span class="comment">// concurrent big merges. If we make findForcedDeletesMerges behave as findForcedMerges and cycle through</span></span><br><span class="line">  <span class="comment">// we should remove this.</span></span><br><span class="line">  <span class="comment">// 除了FORCE_MERGE_DELETES， 若已经有大于5G的段待合并了，本轮又选择了大的段合并了，必须避免该情况。否则将会产生一大推大段合并。</span></span><br><span class="line">  <span class="keyword">if</span> (haveOneLargeMerge == <span class="literal">false</span> || bestTooLarge == <span class="literal">false</span> || mergeType == MERGE_TYPE.FORCE_MERGE_DELETES) &#123;</span><br><span class="line"></span><br><span class="line">    haveOneLargeMerge |= bestTooLarge;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (spec == <span class="literal">null</span>) &#123;</span><br><span class="line">      spec = <span class="keyword">new</span> <span class="title class_">MergeSpecification</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">OneMerge</span> <span class="variable">merge</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OneMerge</span>(best);</span><br><span class="line">    spec.add(merge);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">      message(<span class="string">&quot;  add merge=&quot;</span> + segString(mergeContext, merge.segments) + <span class="string">&quot; size=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f MB&quot;</span>, bestMergeBytes / <span class="number">1024.</span> / <span class="number">1024.</span>) + <span class="string">&quot; score=&quot;</span> + String.format(Locale.ROOT, <span class="string">&quot;%.3f&quot;</span>, bestScore.getScore()) + <span class="string">&quot; &quot;</span> + bestScore.getExplanation() + (bestTooLarge ? <span class="string">&quot; [max merge]&quot;</span> : <span class="string">&quot;&quot;</span>), mergeContext);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// whether we&#x27;re going to return this list in the spec of not, we need to remove it from</span></span><br><span class="line">  <span class="comment">// consideration on the next loop.</span></span><br><span class="line">  <span class="comment">// 无论我们是否要在规范中返回此列表，我们都需要在下一个循环中将其从考虑中删除。</span></span><br><span class="line">  toBeMerged.addAll(best);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>7.5修改了大段<code>merge</code>但这是有代价的，即增加 I/O 的代价。需要重新复制这个大段，假设当前<code>segment</code>是<code>200G</code>  ,里面有 40% 的删除量，那么它会被<code>merge</code>成一个<code>120G</code>的<code>segment</code>。但是最起码不需要重建索引了。</p>
+<h2 id="forceMerge"><a href="#forceMerge" class="headerlink" title="forceMerge"></a>forceMerge</h2><h3 id="7-5-前-1"><a href="#7-5-前-1" class="headerlink" title="7.5 前"></a>7.5 前</h3><p>由于<code>forceMerge</code>是手工触发，并不考虑当前服务吞吐和延迟。所以策略比<code>merge</code>简单粗暴很多。直接把<code>maxMergeAtOnceExplicit</code>（默认 30） 数量大小的 <code>merge</code> 进行合并。如果小于 30 则直接合并所有 <code>segment</code>, 但是他会先从小的合并。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">....</span><br><span class="line">   Map&lt;SegmentCommitInfo,Long&gt; sizeInBytes = getSegmentSizes(mergeContext, eligible);</span><br><span class="line">   ....</span><br><span class="line">   eligible.sort(<span class="keyword">new</span> <span class="title class_">SegmentByteSizeDescending</span>(sizeInBytes));</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Do full merges, first, backwards:</span></span><br><span class="line">   <span class="keyword">while</span>(end &gt;= maxMergeAtOnceExplicit + maxSegmentCount - <span class="number">1</span>) &#123;</span><br><span class="line">     <span class="keyword">if</span> (spec == <span class="literal">null</span>) &#123;</span><br><span class="line">       spec = <span class="keyword">new</span> <span class="title class_">MergeSpecification</span>();</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">final</span> <span class="type">OneMerge</span> <span class="variable">merge</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OneMerge</span>(eligible.subList(end-maxMergeAtOnceExplicit, end));</span><br><span class="line">     <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">       message(<span class="string">&quot;add merge=&quot;</span> + segString(mergeContext, merge.segments), mergeContext);</span><br><span class="line">     &#125;</span><br><span class="line">     spec.add(merge);</span><br><span class="line">     end -= maxMergeAtOnceExplicit;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> (spec == <span class="literal">null</span> &amp;&amp; !forceMergeRunning) &#123;</span><br><span class="line">     <span class="comment">// Do final merge</span></span><br><span class="line">     <span class="keyword">final</span> <span class="type">int</span> <span class="variable">numToMerge</span> <span class="operator">=</span> end - maxSegmentCount + <span class="number">1</span>;</span><br><span class="line">     <span class="keyword">final</span> <span class="type">OneMerge</span> <span class="variable">merge</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OneMerge</span>(eligible.subList(end-numToMerge, end));</span><br><span class="line">     <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">       message(<span class="string">&quot;add final merge=&quot;</span> + merge.segString(), mergeContext);</span><br><span class="line">     &#125;</span><br><span class="line">     spec = <span class="keyword">new</span> <span class="title class_">MergeSpecification</span>();</span><br><span class="line">     spec.add(merge);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-5"><a href="#7-5" class="headerlink" title="7.5"></a>7.5</h3><p>7.5对 <code>forceMerge</code> 进行改造，不进行无脑合并，增加很多不合并的情况，防止没有效益的写放大。对大 <code>segment</code> 的合并需要通过最后的算分</p>
+<p>不合并情况：</p>
+<ol>
+<li>没有 <code>delCount</code> 的 <code>segment</code> 情况下，有可能部分 segment 不会被合并</li>
+</ol>
+<ul>
+<li><code>maxSegmentCount != 1</code> 且 <code>segment</code> 大小大于等于最大合并大小</li>
+<li><code>maxSegmentCount == 1</code> 且 <code>segment</code> 不是原始的</li>
+</ul>
+<ol>
+<li>所有 <code>segment</code> 的没有 <code>delCount</code> 情况下直接结束本次 <code>forceMerge</code></li>
+</ol>
+<ul>
+<li><code>segment</code> 数量小于等于 <code>maxSegmentCount</code></li>
+<li><code>maxSegmentCount</code> 和 <code>segment</code> 数量都为1的情况</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">   <span class="comment">// 更具指定的分段数设置最大分段大小</span></span><br><span class="line">   <span class="keyword">if</span> (maxSegmentCount == <span class="number">1</span>) maxMergeBytes = Long.MAX_VALUE;</span><br><span class="line">   <span class="keyword">else</span> <span class="keyword">if</span> (maxSegmentCount != Integer.MAX_VALUE) &#123;</span><br><span class="line">     <span class="comment">// Fudge this up a bit so we have a better chance of not having to rewrite segments. If we use the exact size,</span></span><br><span class="line">     <span class="comment">// it&#x27;s almost guaranteed that the segments won&#x27;t fit perfectly and we&#x27;ll be left with more segments than</span></span><br><span class="line">     <span class="comment">// we want and have to re-merge in the code at the bottom of this method.</span></span><br><span class="line">     <span class="comment">// 在总的合并大小/分段的数量=每个分段的最大数量，与设置的最大分段大小中取最大值</span></span><br><span class="line">     <span class="comment">// 允许最大分段可以突破最大分段大小的25%</span></span><br><span class="line">     maxMergeBytes = Math.max((<span class="type">long</span>) (((<span class="type">double</span>) totalMergeBytes / (<span class="type">double</span>) maxSegmentCount)), maxMergedSegmentBytes);</span><br><span class="line">     maxMergeBytes = (<span class="type">long</span>) ((<span class="type">double</span>) maxMergeBytes * <span class="number">1.25</span>);</span><br><span class="line">   &#125;</span><br><span class="line">       </span><br><span class="line">   ...</span><br><span class="line"></span><br><span class="line">   <span class="type">boolean</span> <span class="variable">foundDeletes</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">   <span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">     <span class="type">SegmentSizeAndDocs</span> <span class="variable">segSizeDocs</span> <span class="operator">=</span> iter.next();</span><br><span class="line">     <span class="type">Boolean</span> <span class="variable">isOriginal</span> <span class="operator">=</span> segmentsToMerge.get(segSizeDocs.segInfo);</span><br><span class="line">     <span class="comment">// 如果分段是原始的且有已删除的文档，就在合并之列。这是 forceMerge 不考虑删除占比</span></span><br><span class="line">     <span class="keyword">if</span> (segSizeDocs.delCount != <span class="number">0</span>) &#123; <span class="comment">// This is forceMerge, all segments with deleted docs should be merged.</span></span><br><span class="line">       <span class="keyword">if</span> (isOriginal != <span class="literal">null</span> &amp;&amp; isOriginal) &#123;</span><br><span class="line">         foundDeletes = <span class="literal">true</span>;</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">continue</span>;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="comment">// Let the scoring handle whether to merge large segments.</span></span><br><span class="line">     <span class="comment">// maxSegmentCount == 1 情况</span></span><br><span class="line">     <span class="keyword">if</span> (maxSegmentCount == Integer.MAX_VALUE &amp;&amp; isOriginal != <span class="literal">null</span> &amp;&amp; isOriginal == <span class="literal">false</span>) &#123;</span><br><span class="line">       iter.remove();</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="comment">// Don&#x27;t try to merge a segment with no deleted docs that&#x27;s over the max size.</span></span><br><span class="line">     <span class="comment">// maxSegmentCount != 1 情况不合并没有删除数量且超过分片最大数量的 segment</span></span><br><span class="line">     <span class="keyword">if</span> (maxSegmentCount != Integer.MAX_VALUE &amp;&amp; segSizeDocs.sizeInBytes &gt;= maxMergeBytes) &#123;</span><br><span class="line">       iter.remove();</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ...</span><br><span class="line"></span><br><span class="line"><span class="comment">// 在不合并已删除文件的时候，确认不进行无谓的合并。</span></span><br><span class="line">   <span class="keyword">if</span> (foundDeletes == <span class="literal">false</span>) &#123;</span><br><span class="line">     <span class="type">SegmentCommitInfo</span> <span class="variable">infoZero</span> <span class="operator">=</span> sortedSizeAndDocs.get(<span class="number">0</span>).segInfo;</span><br><span class="line">     <span class="keyword">if</span> ((maxSegmentCount != Integer.MAX_VALUE &amp;&amp; maxSegmentCount &gt; <span class="number">1</span> &amp;&amp; sortedSizeAndDocs.size() &lt;= maxSegmentCount) ||</span><br><span class="line">             (maxSegmentCount == <span class="number">1</span> &amp;&amp; sortedSizeAndDocs.size() == <span class="number">1</span> &amp;&amp; (segmentsToMerge.get(infoZero) != <span class="literal">null</span> || isMerged(infos, infoZero, mergeContext)))) &#123;</span><br><span class="line">       <span class="keyword">if</span> (verbose(mergeContext)) &#123;</span><br><span class="line">         message(<span class="string">&quot;already merged&quot;</span>, mergeContext);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h2><ol>
+<li><code>forceMerge</code> 现在的表现很好，但操作还是比较昂贵的，最好还是在没有写入的情况下操作。</li>
+<li>使用<code>expungeDeletes</code> 只争对存在删除的<code>segment</code>操作，使用比<code>forceMerge</code> 更少的 <code>I/O</code> 和 <code>CPU</code>资源。</li>
+<li>灵活的使用<code>forceMerge</code>告诉他需要多少个<code>segment</code>，但是这需要一个专家计算得出。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/PacificA%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%8E%9F%E5%9E%8B/" rel="prev" title="PacificA分布式系统原型">
+                  <i class="fa fa-chevron-left"></i> PacificA分布式系统原型
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/book/Google%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95%E4%B9%8B%E9%81%93%E5%BF%83%E5%BE%97/" rel="next" title="Google软件测试之道心得">
+                  Google软件测试之道心得 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
