@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/1661382284231-6c1a9f15-e168-497c-a0e7-314695dea511.png">
 <meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
-<meta property="article:modified_time" content="2023-02-09T15:23:04.916Z">
+<meta property="article:modified_time" content="2023-02-09T15:26:37.639Z">
 <meta property="article:author" content="mzl">
 <meta property="article:tag" content="java k8s 大数据">
 <meta name="twitter:card" content="summary">
@@ -227,7 +227,6 @@
 <p>​    测试工程师也称作“用户开发者”，因为 TE 需要站在用户角度了解使用产品，负责端到端测试用例编写，对每一个重要的缺陷都要增加一个测试用例与之对应，并且跟踪推动缺陷修复。测试工程师也需要查看历史的功能设计文档，并且对后续的测试用例模块进行评审。</p>
 <p>​    测试工程师重要品质测试人员不该对测试文档过于珍爱，糟糕的测试用例需要被抛弃，而最后留下来的是更好的测试用例。测试重要的一面是做确认，完成测试计划并且确认，使程序崩溃并不总是测试工程师的目标。以极端的输入数据来测试软件并使之出错这很意义，但更有意义的是用不那么极端的输入，一遍又一遍地测试用以模拟真实的使用场景，确保这些通用条件下软件的运行不会出错。在面试时候Google也会特意寻找这种有正面的测试观的测试人员。</p>
 <p>​    测试工程师还需要对软件风险进行把控，需要通过对失败频率和影响范围对风险进行分析打分，对暴露出来的分险进行用户故事和测试用例的覆盖，如果已经覆盖需要考虑当前测试用例是否足够，是否需要增加额外的测试。</p>
-<!-- more -->
 <h2 id="Google的测试类型有"><a href="#Google的测试类型有" class="headerlink" title="Google的测试类型有"></a>Google的测试类型有</h2><h3 id="小型测试："><a href="#小型测试：" class="headerlink" title="小型测试："></a>小型测试：</h3><p>​    使用mock或fake环境，进行小规模的测试编写，确认代码的边界。在代码做了变更后可以快速检测一下尽早发现问题。</p>
 <p>​    mock对象是指对外面依赖的系统的模拟，在运行时刻可以根据假设的需求提供期望的结果。<br>fake 对象是一种虚拟的实现，内部使用了固定的数据或逻辑，只能返回特定 的结果</p>
 <p><strong>优势：</strong> 它们有较小的测试范围，这样可以很容易地做边界场景与错误条件的测试，不依赖外部系统所有的环境下它们都可以可靠快速的运行</p>
