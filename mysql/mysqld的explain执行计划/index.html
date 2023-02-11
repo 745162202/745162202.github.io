@@ -19,28 +19,28 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="带着问题学习  容器之间如何互相通信 Kubernees 如何做到跨节点互相通信">
+    <meta name="description" content="对 mysql索引和数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。 select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的UN">
 <meta property="og:type" content="article">
-<meta property="og:title" content="被隔离的容器进程如何进行交互">
-<meta property="og:url" content="https://745162202.github.io/k8s/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/index.html">
+<meta property="og:title" content="mysqld的explain执行计划">
+<meta property="og:url" content="https://745162202.github.io/mysql/mysqld%E7%9A%84explain%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/index.html">
 <meta property="og:site_name" content="mzl-技术分享">
-<meta property="og:description" content="带着问题学习  容器之间如何互相通信 Kubernees 如何做到跨节点互相通信">
+<meta property="og:description" content="对 mysql索引和数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。 select_type查询类型。   查询类型 含义    SIMPLE 简单查询（不包含子查询或UNION)   PRIMARY 最外层查询   UNION UNION 语句中第二或更后面的查询   DEPENDENT UNION 依赖外部查询的UN">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-05-07T16:00:00.000Z">
-<meta property="article:modified_time" content="2023-02-09T14:41:29.239Z">
+<meta property="article:published_time" content="2019-10-07T12:26:41.000Z">
+<meta property="article:modified_time" content="2023-02-11T08:44:59.319Z">
 <meta property="article:author" content="mzl">
 <meta property="article:tag" content="java k8s 大数据">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://745162202.github.io/k8s/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/">
+<link rel="canonical" href="https://745162202.github.io/mysql/mysqld%E7%9A%84explain%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/k8s/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/","path":"k8s/容器网络/","title":"被隔离的容器进程如何进行交互"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/mysql/mysqld%E7%9A%84explain%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/","path":"mysql/mysqld的explain执行计划/","title":"mysqld的explain执行计划"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>被隔离的容器进程如何进行交互 | mzl-技术分享</title>
+<title>mysqld的explain执行计划 | mzl-技术分享</title>
   
 
 
@@ -99,7 +99,7 @@
   
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -112,6 +112,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#select-type%E6%9F%A5%E8%AF%A2%E7%B1%BB%E5%9E%8B%E3%80%82"><span class="nav-number">1.</span> <span class="nav-text">select_type查询类型。</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#type-%E7%BA%A7%E5%88%AB%E8%AF%A6%E8%A7%A3"><span class="nav-number">2.</span> <span class="nav-text">type 级别详解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Extra%E5%AD%97%E6%AE%B5"><span class="nav-number">3.</span> <span class="nav-text">Extra字段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%8D%E5%90%88%E7%B4%A2%E5%BC%95"><span class="nav-number">4.</span> <span class="nav-text">复合索引</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -124,13 +125,13 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
   </nav>
@@ -157,7 +158,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/k8s/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/mysql/mysqld%E7%9A%84explain%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -170,12 +171,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="被隔离的容器进程如何进行交互 | mzl-技术分享">
+      <meta itemprop="name" content="mysqld的explain执行计划 | mzl-技术分享">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          被隔离的容器进程如何进行交互
+          mysqld的explain执行计划
         </h1>
 
         <div class="post-meta-container">
@@ -186,7 +187,7 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
+      <time title="创建时间：2019-10-07 20:26:41" itemprop="dateCreated datePublished" datetime="2019-10-07T20:26:41+08:00">2019-10-07</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -194,7 +195,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/k8s/" itemprop="url" rel="index"><span itemprop="name">k8s</span></a>
+          <a href="/categories/mysql/" itemprop="url" rel="index"><span itemprop="name">mysql</span></a>
         </span>
     </span>
 
@@ -215,24 +216,94 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <p>带着问题学习</p>
-<ol>
-<li>容器之间如何互相通信</li>
-<li>Kubernees 如何做到跨节点互相通信<span id="more"></span></li>
-</ol>
-<p>docker 在运行的时候如果没有声明  -net=host (使用宿主机网络，即不开启 Network Namespace) ，直接使用宿主机网络栈的方式，虽然可以为容器提供良好的网络性能，但也会不可避免地引入共享网络资源的问题，比如端口冲突。所以，<strong>在大多数情况下，我们都希望容器进程能使用自己 Network Namespace 里的网络栈。</strong>那么问题来了 docker 是如何做到被隔离的容器进程如何进行交互呢？</p>
-<p><strong>Docker 项目默认会在宿主机创建一名叫 docker0 的网桥。</strong>如下图所示</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">➜  /bin ifconfig</span><br><span class="line">docker0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255</span><br><span class="line">inet6 fe80::42:9bff:fec7:5586  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">ether 02:42:9b:c7:55:86  txqueuelen 0  (以太网)</span><br><span class="line">RX packets 1  bytes 28 (28.0 B)</span><br><span class="line">RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">TX packets 5  bytes 446 (446.0 B)</span><br><span class="line">TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br></pre></td></tr></table></figure>
+        <p>对 mysql索引和数据页结构，进行研究整理。数据页结构对理解很多索引优化原理很有帮助！下次写一篇关于对数据页结构的文章加深对数据页结构的知识点。</p>
+<h2 id="select-type查询类型。"><a href="#select-type查询类型。" class="headerlink" title="select_type查询类型。"></a>select_type查询类型。</h2><table>
+<thead>
+<tr>
+<th>查询类型</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SIMPLE</td>
+<td>简单查询（不包含子查询或UNION)</td>
+</tr>
+<tr>
+<td>PRIMARY</td>
+<td>最外层查询</td>
+</tr>
+<tr>
+<td>UNION</td>
+<td>UNION 语句中第二或更后面的查询</td>
+</tr>
+<tr>
+<td>DEPENDENT UNION</td>
+<td>依赖外部查询的UNION中第二或更后面的查询</td>
+</tr>
+<tr>
+<td>UNION RESULT</td>
+<td>UNION语句的结果集</td>
+</tr>
+<tr>
+<td>SUBQUERY</td>
+<td>子查询中的第一个查询</td>
+</tr>
+<tr>
+<td>DEPENDENT SUBQUERY</td>
+<td>依赖外部查询的子查询中的第一个查询</td>
+</tr>
+<tr>
+<td>DERIVED</td>
+<td>查询的派生表(在FROM从句中的子查询）</td>
+</tr>
+<tr>
+<td>MATERIALIZED</td>
+<td>物化子查询</td>
+</tr>
+<tr>
+<td>UNCACHEABLE SUBQUERY</td>
+<td>无法缓存结果的子查询，并且必须为外部查询的每一行重新计算</td>
+</tr>
+<tr>
+<td>UNCACHEABLE UNION</td>
+<td>属于无法缓存的子查询的UNION的第二或更后面的查询</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<span id="more"></span>
+<h2 id="type-级别详解"><a href="#type-级别详解" class="headerlink" title="type 级别详解"></a>type 级别详解</h2><blockquote>
+<p>type索引类型<br> system&gt;const&gt;eq_ref&gt;ref&gt;range&gt;index&gt;all，要对 type 进行优化的前提：有索引<br>其中：system,const 只是理想情况；实际能达到 ref&gt;range<br>。<strong>隐式转换会导致索引失效！</strong></p>
+</blockquote>
+<ul>
+<li>ALL：MySQL 将遍历全表以找到匹配的行</li>
+<li>index: index 与 ALL 区别为 index 类型只遍历索引树</li>
+<li>range:只检索给定范围的行，使用一个索引来选择行,常见于使用 =, &lt;&gt;, &gt;, &gt;=, &lt;, &lt;=, IS NULL, &lt;=&gt;, BETWEEN, IN()或者like等运算符的查询中。<strong>当范围数据量过大会自动变成 All 或 index</strong></li>
+<li>ref: <strong>非唯一性索引</strong>，对于每个索引键的查询，返回匹配的所有行（0~多个）</li>
+<li>eq_ref: 类似 ref，区别就在使用的索引是唯一索引<strong>且必须为not null</strong>，对于每个索引键值，表中只有一条记录匹配，简单来说，就是多表连接中使用 primary key 或者 unique key 作为关联条件</li>
+<li>const、system: 使用唯一索引或者主键，返回记录一定是1行记录的等值where条件时，通常type是const。其他数据库也叫做唯一索引扫描。，system 是 const 类型的特例，当查询的表只有一行的情况下，使用 system</li>
+<li>NULL: </li>
+</ul>
+<h2 id="Extra字段"><a href="#Extra字段" class="headerlink" title="Extra字段"></a>Extra字段</h2><ul>
+<li>Using index ：表示相应的 select 操作中使用了覆盖索引（Covering Index）</li>
+<li>Using where; Using index ： 索引来检索记录（不需要实际访问表），在此结果集之上通过 where 过滤。</li>
+<li>Using index condition ： 条件包含索引和未索引的列，优化器将首先解析索引的列，通过索引获取数据行再查找其他条件的行(5.6后出现)</li>
+<li>Using where ： 表示 mysql 服务器将在存储引擎检索行后再进行过滤</li>
+<li>usingFilesort：性能消耗大；需要「额外」的一次排序（查询） 。常见于 order by 语句中。</li>
+<li>Using join buffer：标示 Mysql 引擎使用了 连接缓存。</li>
+<li>NULL: </li>
+</ul>
+<h2 id="复合索引"><a href="#复合索引" class="headerlink" title="复合索引"></a>复合索引</h2><ul>
+<li>最好全值匹配</li>
+<li>最左前缀法则</li>
+<li>不在索引列上做任何操作「计算，函数，类型转换（显示、隐式）」</li>
+<li>复合索引不能使用 !=、is null (is not null)、in、&gt;、&lt; 否则右侧所有全部失效，有时  也会导致索引失效。</li>
+<li>like尽量以“常量”开头，不要以’%’开头，否则索引失效</li>
+<li>尽量不要使用or，否则包括左侧的所有索引都会失效</li>
+</ul>
 
-<p>容器连接 docker0 网桥上的容器，就可以通过它来进行通信。那么我们又该如何把这些容器“连接”到 docker0 网桥上呢？我们就需要使用一种名叫<strong>Veth Pair</strong>的虚拟设备了。</p>
-<p>veth pair 特定，有两张虚拟网卡其中一张网卡发送数据包，可以直接出现在与它对应的另一张网卡上，哪怕这两个网卡在不同的 Network Namespace 里。</p>
-<p>Veth Pair 常常被用作连接不同 Network Namespace 的“网线”。</p>
-<p>下面就是我启动两个  nginx 的 Veth Pair 。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">➜  /bin ifconfig</span><br><span class="line">veth7cf1ab4: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::1c3f:a6ff:fe3a:4a  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether 1e:3f:a6:3a:00:4a  txqueuelen 0  (以太网)</span><br><span class="line">        RX packets 5  bytes 378 (378.0 B)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 27  bytes 2110 (2.1 KB)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br><span class="line"></span><br><span class="line">vethd0c2603: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::38e5:efff:fe36:5dfc  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether 3a:e5:ef:36:5d:fc  txqueuelen 0  (以太网)</span><br><span class="line">        RX packets 5  bytes 378 (378.0 B)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 22  bytes 1664 (1.6 KB)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br></pre></td></tr></table></figure>
-
-
-<p>通过 brctl show 的输出，你可以看到两个 Veth 绑定在  docker0 上</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">➜  /bin brctl show</span><br><span class="line">bridge name     bridge id               STP enabled     interfaces</span><br><span class="line">docker0         8000.02429bc75586       no              veth7cf1ab4</span><br><span class="line">                                                        vethd0c2603</span><br></pre></td></tr></table></figure>
     </div>
 
     
@@ -245,13 +316,13 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/k8s/k8s%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%AE%BE%E8%AE%A1%E4%B8%80%E4%B8%AAPod/" rel="prev" title="k8s为什么需要设计一个Pod">
-                  <i class="fa fa-chevron-left"></i> k8s为什么需要设计一个Pod
+                <a href="/mysql/innoDB%E7%9A%84%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B/" rel="prev" title="innoDB的索引模型">
+                  <i class="fa fa-chevron-left"></i> innoDB的索引模型
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/PacificA%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%8E%9F%E5%9E%8B/" rel="next" title="PacificA分布式系统原型">
-                  PacificA分布式系统原型 <i class="fa fa-chevron-right"></i>
+                <a href="/mysql/InnoDB%20%E8%A1%8C%E6%A0%BC%E5%BC%8F%20/" rel="next" title="InnoDB 页和行格式">
+                  InnoDB 页和行格式 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>

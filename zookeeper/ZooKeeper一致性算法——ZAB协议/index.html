@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="0. ZAB协议基础介绍​    ZAB（ZooKeeper 原子消息广播协议）一种类 Paxos 算法，ZAB 协议是为分布式协调服务 ZooKeeper 专门设计的一种支持崩溃恢复的原子广播协议。 ​    ZAB 协议的核心是定义了对于那些会改变 ZooKeeper 服务器数据状态的事务请求的处理方式，即：所有事务请求必须由一个全局唯一的服务器来协调处理，这样的服务器被称为 Leader 服">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ZooKeeper一致性算法——ZAB协议">
+<meta property="og:url" content="https://745162202.github.io/zookeeper/ZooKeeper%E4%B8%80%E8%87%B4%E6%80%A7%E7%AE%97%E6%B3%95%E2%80%94%E2%80%94ZAB%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="0. ZAB协议基础介绍​    ZAB（ZooKeeper 原子消息广播协议）一种类 Paxos 算法，ZAB 协议是为分布式协调服务 ZooKeeper 专门设计的一种支持崩溃恢复的原子广播协议。 ​    ZAB 协议的核心是定义了对于那些会改变 ZooKeeper 服务器数据状态的事务请求的处理方式，即：所有事务请求必须由一个全局唯一的服务器来协调处理，这样的服务器被称为 Leader 服">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-11T09:14:57.269Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://745162202.github.io/zookeeper/ZooKeeper%E4%B8%80%E8%87%B4%E6%80%A7%E7%AE%97%E6%B3%95%E2%80%94%E2%80%94ZAB%E5%8D%8F%E8%AE%AE/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/zookeeper/ZooKeeper%E4%B8%80%E8%87%B4%E6%80%A7%E7%AE%97%E6%B3%95%E2%80%94%E2%80%94ZAB%E5%8D%8F%E8%AE%AE/","path":"zookeeper/ZooKeeper一致性算法——ZAB协议/","title":"ZooKeeper一致性算法——ZAB协议"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ZooKeeper一致性算法——ZAB协议 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0-ZAB%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">0. ZAB协议基础介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#1-ZAB%E5%8D%8F%E8%AE%AE%E5%85%B7%E4%BD%93%E5%86%85%E5%AE%B9"><span class="nav-number">2.</span> <span class="nav-text">1.ZAB协议具体内容</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E5%B9%BF%E6%92%AD%E5%8D%8F%E8%AE%AE"><span class="nav-number">2.1.</span> <span class="nav-text">消息广播协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B4%A9%E6%BA%83%E6%81%A2%E5%A4%8D%E5%8D%8F%E8%AE%AE"><span class="nav-number">2.2.</span> <span class="nav-text">崩溃恢复协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.3.</span> <span class="nav-text">数据同步类型</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/zookeeper/ZooKeeper%E4%B8%80%E8%87%B4%E6%80%A7%E7%AE%97%E6%B3%95%E2%80%94%E2%80%94ZAB%E5%8D%8F%E8%AE%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ZooKeeper一致性算法——ZAB协议 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ZooKeeper一致性算法——ZAB协议
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-12-03 00:00:00" itemprop="dateCreated datePublished" datetime="2021-12-03T00:00:00+08:00">2021-12-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/zookeeper/" itemprop="url" rel="index"><span itemprop="name">zookeeper</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="0-ZAB协议基础介绍"><a href="#0-ZAB协议基础介绍" class="headerlink" title="0. ZAB协议基础介绍"></a>0. ZAB协议基础介绍</h1><p>​    ZAB（<strong>ZooKeeper 原子消息广播协议</strong>）一种类 Paxos 算法，ZAB 协议是为分布式协调服务 ZooKeeper 专门设计的一种支持崩溃恢复的原子广播协议。</p>
+<p>​    ZAB 协议的核心是定义了对于那些会改变 ZooKeeper 服务器数据状态的事务请求的处理方式，即：所有事务请求必须由一个全局唯一的服务器来协调处理，这样的服务器被称为 Leader 服务器，而余下的其他服务器则成为 Follower 服务器或是 <strong>Observer 服务器（与 Follower 的区别就是不参加选举）</strong>。Leader 服务器负责将一个客户端事务请求转换成一个<strong>事务 Proposal（提议）</strong>，并将该 Proposal 分发给集群中所有的其他服务器。之后 Leader 服务器需要<strong>等待超过半数的服务器进行了正确的反馈</strong>后，那么 Leader 就会再次将这些服务器发送 Commit 消息，要求其将前一个 Proposal 进行提交。</p>
+<span id="more"></span>
+
+<h1 id="1-ZAB协议具体内容"><a href="#1-ZAB协议具体内容" class="headerlink" title="1.ZAB协议具体内容"></a>1.ZAB协议具体内容</h1><p>​    ZAB协议包括两种基本的模式分别是崩溃恢复和消息广播。崩溃恢复不仅需要选举 Leader 还要进行数据同步，数据同步包含四种类型分别为，<strong>直接差异化同步 ，</strong>回退，回退+差异化同步，全量同步（ZXID 不在 Leader 的 Proposal 缓存队列）</p>
+<h2 id="消息广播协议"><a href="#消息广播协议" class="headerlink" title="消息广播协议"></a>消息广播协议</h2><p>​    ZAB协议的消息广播过程使用的是一个原子广播协议，类似于一个二阶段提交过程。在整个消息广播过程中，Leader 服务器会为每个事务请求生成对应的 Proposal 来进行广播，并且在广播事务 Proposal 之前，Leader服务器会首先为这个事务 Proposal 分配一个全局单调递增的唯一ID，我们称之为事务ID(即ZXID)。由于ZAB协议需要保证每一个消息严格的因果关系，因此必须将每一个事务 Proposal 按照其 ZXID的先后顺序来进行排序与处理。</p>
+<p>​    <strong>ZAB协议主要是保证事务的顺序一致性并且可以支持数据增量恢复</strong>， ZXID 设计是一个 64位 的数字，其中低 32位 可以看作是一个简单的单调递增的计数器，针对客户端的每一个事务请求，Leader 服务器在产生一个新的事务 Proposal 的时候，都会对该计数器进行加一操作， 而高 32位 则代表了 Leader 周期 epoch 的编号，每当选举产生一个新的 Leader 服务器，获取最大的 ZXID 并从该 ZXID 中解析出对应的 epoch 值，然后再对其进行加一操作之后就会以此编号作为新的 epoch，并将低32位置0来开始生成新的 ZXID。</p>
+<h2 id="崩溃恢复协议"><a href="#崩溃恢复协议" class="headerlink" title="崩溃恢复协议"></a>崩溃恢复协议</h2><p>​    服务框架在启动过程中或是当 Leader 服务器出现网络中断、崩溃退出与重启等异常情况时，ZAB协议就会进入恢复模式并选举产生新的 Leader 服务器。当选举产生了新的 Leader 服务器，同时集群中已经有过半的机器与该 Leader 服务器完成了状态同步之后，ZAB协议就会退出恢复模式。其中所谓的状态同步是指数据同步，用来保证集群中存在过半的机器能够和 Leader 服务器的数据状态保持一致。</p>
+<h2 id="数据同步类型"><a href="#数据同步类型" class="headerlink" title="数据同步类型"></a>数据同步类型</h2><p>​    <strong>直接差异化同步</strong>比较简单，就是 Learder 挂了之后，另外两个服务产生新的 Learder ，老的 Learder 节点恢复后发现自己的 ZXID 的 epoch 小于现在的 epoch。老 Learder 成为 Follow 加入集群，并且同步恢复时间的这段数据。</p>
+<p>​    <strong>全量同步是差异化同步 一种特殊情况</strong>，老的 Learder 节点恢复的时间比较长它的 ZXID 已经不在 Leader 的 Proposal 缓存队列，这个时候只能全量同步最新 Learder 的数据。</p>
+<p>​    <strong>回退，</strong>基本上属于老 Learder 的 Proposal  自己提交还没有发送给 Follow 节点就挂了，然后马上有恢复当前集群已经完成重新选举 Learder，在新的 Learder 种没有老的 Learder 那条未提交的数据，所以新的 Learder 会让老 Learder 进行回退操作。</p>
+<blockquote>
+<p>这个情况并不属于丢数据，因为客户端还没有获得成功的响应，业务端可以自行增加重试逻辑。</p>
+</blockquote>
+<p>​    <strong>回退+差异化同步，</strong>回退的一种特殊情况，相较于回退在老 Learder 加入节点前已经提交过新的 Proposal。所以老 Learder 需要回退新的 Learder 种没有的 Proposal，并对新的Proposal 进行同步。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/kafka/kafka%E5%86%99%E5%85%A5%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B9%88%E5%BF%AB/" rel="prev" title="kafka写入为什么这么快">
+                  <i class="fa fa-chevron-left"></i> kafka写入为什么这么快
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/k8s/%E8%AE%B0%E5%BD%95%E8%B8%A9%E5%9D%91-OpenJDK%20%E8%8E%B7%E5%8F%96%E8%BF%9B%E7%A8%8BCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E4%B8%8D%E5%87%86%E9%97%AE%E9%A2%98/" rel="next" title="记录踩坑-OpenJDK 获取进程CPU使用率不准问题">
+                  记录踩坑-OpenJDK 获取进程CPU使用率不准问题 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

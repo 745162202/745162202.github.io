@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="mysql 事务部分回滚 最近被人问到，MySql 是否可以部分事务回滚。我义正言辞的书不能，最后被教育了。写了这么多代码都不知道  mysql 的保存点。今天有空记录下研究的 savepoint 。共勉！  mysql 事务有一个保存点功能，可以回退到固定点。点的设置没有数量限制，如果执行 COMMIT 或未 ROLLBACK 命名保存点，会删除当前事务中定义的保存点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql 事务部分回滚">
+<meta property="og:url" content="https://745162202.github.io/mysql/mysql-%E4%BA%8B%E5%8A%A1%E9%83%A8%E5%88%86%E5%9B%9E%E6%BB%9A/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="mysql 事务部分回滚 最近被人问到，MySql 是否可以部分事务回滚。我义正言辞的书不能，最后被教育了。写了这么多代码都不知道  mysql 的保存点。今天有空记录下研究的 savepoint 。共勉！  mysql 事务有一个保存点功能，可以回退到固定点。点的设置没有数量限制，如果执行 COMMIT 或未 ROLLBACK 命名保存点，会删除当前事务中定义的保存点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-04-07T08:07:22.000Z">
+<meta property="article:modified_time" content="2023-02-11T08:44:46.215Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://745162202.github.io/mysql/mysql-%E4%BA%8B%E5%8A%A1%E9%83%A8%E5%88%86%E5%9B%9E%E6%BB%9A/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/mysql/mysql-%E4%BA%8B%E5%8A%A1%E9%83%A8%E5%88%86%E5%9B%9E%E6%BB%9A/","path":"mysql/mysql-事务部分回滚/","title":"mysql 事务部分回滚"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>mysql 事务部分回滚 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#mysql-%E4%BA%8B%E5%8A%A1%E9%83%A8%E5%88%86%E5%9B%9E%E6%BB%9A"><span class="nav-number">1.</span> <span class="nav-text">mysql 事务部分回滚</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SAVEPOINT-%E4%B8%A4%E4%B8%AA%E4%B8%BB%E8%A6%81%E5%8A%9F%E8%83%BD"><span class="nav-number">1.1.</span> <span class="nav-text">SAVEPOINT 两个主要功能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SAVEPOINT-%E5%9C%A8%E6%A1%86%E6%9E%B6%E4%B8%AD%E5%BA%94%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">SAVEPOINT 在框架中应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ThinkPHP"><span class="nav-number">1.2.1.</span> <span class="nav-text">ThinkPHP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Laravel"><span class="nav-number">1.2.2.</span> <span class="nav-text">Laravel</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">总结：</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/mysql/mysql-%E4%BA%8B%E5%8A%A1%E9%83%A8%E5%88%86%E5%9B%9E%E6%BB%9A/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="mysql 事务部分回滚 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          mysql 事务部分回滚
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-04-07 16:07:22" itemprop="dateCreated datePublished" datetime="2020-04-07T16:07:22+08:00">2020-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/mysql/" itemprop="url" rel="index"><span itemprop="name">mysql</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="mysql-事务部分回滚"><a href="#mysql-事务部分回滚" class="headerlink" title="mysql 事务部分回滚"></a>mysql 事务部分回滚</h1><blockquote>
+<p>最近被人问到，MySql 是否可以部分事务回滚。我义正言辞的书不能，最后被教育了。写了这么多代码都不知道  mysql 的保存点。今天有空记录下研究的 savepoint 。共勉！</p>
+</blockquote>
+<p>mysql 事务有一个保存点功能，可以回退到固定点。点的设置没有数量限制，如果执行 COMMIT 或未 ROLLBACK 命名保存点，会删除当前事务中定义的保存点。</p>
+<span id="more"></span>
+<h2 id="SAVEPOINT-两个主要功能"><a href="#SAVEPOINT-两个主要功能" class="headerlink" title="SAVEPOINT 两个主要功能"></a>SAVEPOINT 两个主要功能</h2><p>保存点设置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SAVEPOINT identifier（保存点名称）</span><br></pre></td></tr></table></figure>
+<p>回退到某个保存点</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ROLLBACK TO identifier（保存点名称）</span><br></pre></td></tr></table></figure>
+
+<h2 id="SAVEPOINT-在框架中应用"><a href="#SAVEPOINT-在框架中应用" class="headerlink" title="SAVEPOINT 在框架中应用"></a>SAVEPOINT 在框架中应用</h2><h3 id="ThinkPHP"><a href="#ThinkPHP" class="headerlink" title="ThinkPHP"></a>ThinkPHP</h3><p>文件路径 thinkphp\library\think\db\connection.php</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 启动事务</span><br><span class="line"> * @access public</span><br><span class="line"> * @return void</span><br><span class="line"> * @throws \PDOException</span><br><span class="line"> * @throws \Exception</span><br><span class="line"> */</span><br><span class="line">public function startTrans()</span><br><span class="line">&#123;</span><br><span class="line">    //初始化数据库连接</span><br><span class="line">    $this-&gt;initConnect(true);</span><br><span class="line">    //当前连接ID</span><br><span class="line">    if (!$this-&gt;linkID) &#123;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    //活跃的事务指令数,默认值为0</span><br><span class="line">    ++$this-&gt;transTimes;</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        if (1 == $this-&gt;transTimes) &#123;</span><br><span class="line">        //启动一个事务</span><br><span class="line">            $this-&gt;linkID-&gt;beginTransaction();</span><br><span class="line">        &#125; elseif ($this-&gt;transTimes &gt; 1 &amp;&amp; $this-&gt;supportSavepoint()) &#123;</span><br><span class="line">            //开启多次事务   $this-&gt;supportSavepoint() mysql 返回 true </span><br><span class="line">            //数据库连接执行一条SQL语句并返回受影响的行数</span><br><span class="line">            $this-&gt;linkID-&gt;exec(</span><br><span class="line">                // 生成定义保存点的SQL</span><br><span class="line">                $this-&gt;parseSavepoint(&#x27;trans&#x27; . $this-&gt;transTimes)</span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (\Exception $e) &#123;</span><br><span class="line">        //如果断线重新开始事务</span><br><span class="line">        if ($this-&gt;isBreak($e)) &#123;</span><br><span class="line">            --$this-&gt;transTimes;</span><br><span class="line">            //关闭本次连接 递归调用自己</span><br><span class="line">            return $this-&gt;close()-&gt;startTrans();</span><br><span class="line">        &#125;</span><br><span class="line">        throw $e;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 事务回滚</span><br><span class="line"> * @access public</span><br><span class="line"> * @return void</span><br><span class="line"> * @throws PDOException</span><br><span class="line"> */</span><br><span class="line">public function rollback()</span><br><span class="line">&#123;</span><br><span class="line">    //初始化数据库连接</span><br><span class="line">    $this-&gt;initConnect(true);</span><br><span class="line"></span><br><span class="line">    if (1 == $this-&gt;transTimes) &#123;</span><br><span class="line">        //开启事务直接回滚</span><br><span class="line">        $this-&gt;linkID-&gt;rollBack();</span><br><span class="line">    &#125; elseif ($this-&gt;transTimes &gt; 1 &amp;&amp; $this-&gt;supportSavepoint()) &#123;</span><br><span class="line">        //数据库连接执行一条SQL语句并返回受影响的行数</span><br><span class="line">        $this-&gt;linkID-&gt;exec(</span><br><span class="line">            //生成回滚到保存点的SQL</span><br><span class="line">            $this-&gt;parseSavepointRollBack(&#x27;trans&#x27; . $this-&gt;transTimes)</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    $this-&gt;transTimes = max(0, $this-&gt;transTimes - 1);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到第一次调用后再调用 startTrans 都会增加一个自定义保存节点。rollback 方法方法也是一层层返回到上次节点，直到最后一次全部回滚。commit 与 rollback 同理</p>
+<h3 id="Laravel"><a href="#Laravel" class="headerlink" title="Laravel"></a>Laravel</h3><p>vendor\laravel\framework\src\Illuminate\Database\Connection.php</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 启动事务</span><br><span class="line"> * Start a new database transaction.</span><br><span class="line"> *</span><br><span class="line"> * @return void</span><br><span class="line"> *</span><br><span class="line"> * @throws \Exception</span><br><span class="line"> */</span><br><span class="line">public function beginTransaction()</span><br><span class="line">&#123;</span><br><span class="line">    //创建事务</span><br><span class="line">    $this-&gt;createTransaction();</span><br><span class="line">    //活跃的事务指令数,默认值为0</span><br><span class="line">    $this-&gt;transactions++;</span><br><span class="line"></span><br><span class="line">    $this-&gt;fireConnectionEvent(&#x27;beganTransaction&#x27;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>vendor\laravel\framework\src\Illuminate\Database\ManagesTransactions.php</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Create a transaction within the database.</span><br><span class="line"> *</span><br><span class="line"> * @return void</span><br><span class="line"> */</span><br><span class="line">protected function createTransaction()</span><br><span class="line">&#123;</span><br><span class="line">    if ($this-&gt;transactions == 0) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            //获取当前PDO连接。并开启事务</span><br><span class="line">            $this-&gt;getPdo()-&gt;beginTransaction();</span><br><span class="line">        &#125; catch (Exception $e) &#123;</span><br><span class="line">            //开启事务异常重新连接数据库并且开启事务</span><br><span class="line">            $this-&gt;handleBeginTransactionException($e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; elseif ($this-&gt;transactions &gt;= 1 &amp;&amp; $this-&gt;queryGrammar-&gt;supportsSavepoints()) &#123;</span><br><span class="line">        //开启多次事务   $this-&gt;queryGrammar-&gt;supportsSavepoints() mysql 返回 true </span><br><span class="line">        $this-&gt;createSavepoint();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Create a save point within the database.</span><br><span class="line"> *</span><br><span class="line"> * @return void</span><br><span class="line"> */</span><br><span class="line">protected function createSavepoint()</span><br><span class="line">&#123;</span><br><span class="line">    //数据库连接执行一条SQL语句并返回受影响的行数</span><br><span class="line">    $this-&gt;getPdo()-&gt;exec(</span><br><span class="line">        // 生成定义保存点的SQL</span><br><span class="line">        $this-&gt;queryGrammar-&gt;compileSavepoint(&#x27;trans&#x27;.($this-&gt;transactions + 1))</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 回滚</span><br><span class="line"> * Rollback the active database transaction.</span><br><span class="line"> *</span><br><span class="line"> * @param  int|null  $toLevel</span><br><span class="line"> * @return void</span><br><span class="line"> *</span><br><span class="line"> * @throws \Exception</span><br><span class="line"> */</span><br><span class="line">public function rollBack($toLevel = null)</span><br><span class="line">&#123;</span><br><span class="line">    //可以传输想要回退的等级，在尝试回滚到之前，该给定事务级别是否有效</span><br><span class="line">    $toLevel = is_null($toLevel)</span><br><span class="line">                ? $this-&gt;transactions - 1</span><br><span class="line">                : $toLevel;</span><br><span class="line"></span><br><span class="line">    if ($toLevel &lt; 0 || $toLevel &gt;= $this-&gt;transactions) &#123;</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   </span><br><span class="line">    try &#123;</span><br><span class="line">        $this-&gt;performRollBack($toLevel);</span><br><span class="line">    &#125; catch (Exception $e) &#123;</span><br><span class="line">        $this-&gt;handleRollBackException($e);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    $this-&gt;transactions = $toLevel;</span><br><span class="line">    //触发事件</span><br><span class="line">    $this-&gt;fireConnectionEvent(&#x27;rollingBack&#x27;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Perform a rollback within the database.</span><br><span class="line"> *</span><br><span class="line"> * @param  int  $toLevel</span><br><span class="line"> * @return void</span><br><span class="line"> */</span><br><span class="line">protected function performRollBack($toLevel)</span><br><span class="line">&#123;</span><br><span class="line">    if ($toLevel == 0) &#123;</span><br><span class="line">        $this-&gt;getPdo()-&gt;rollBack();</span><br><span class="line">    &#125; elseif ($this-&gt;queryGrammar-&gt;supportsSavepoints()) &#123;</span><br><span class="line">        $this-&gt;getPdo()-&gt;exec(</span><br><span class="line">            $this-&gt;queryGrammar-&gt;compileSavepointRollBack(&#x27;trans&#x27;.($toLevel + 1))</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 提交</span><br><span class="line"> * Commit the active database transaction.</span><br><span class="line"> *</span><br><span class="line"> * @return void</span><br><span class="line"> */</span><br><span class="line">public function commit()</span><br><span class="line">&#123;</span><br><span class="line">    if ($this-&gt;transactions == 1) &#123;</span><br><span class="line">        $this-&gt;getPdo()-&gt;commit();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    $this-&gt;transactions = max(0, $this-&gt;transactions - 1);</span><br><span class="line"></span><br><span class="line">    $this-&gt;fireConnectionEvent(&#x27;committed&#x27;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h1><ul>
+<li>mysql 支持部分事务回滚。</li>
+<li>现在框架都实现了嵌套事务。 Laravel 回滚可以指定回滚的级别。其他大同小异。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/mysql/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3MySQL%E7%9A%84online-DDL/" rel="prev" title="深入了解MySQL的online DDL">
+                  <i class="fa fa-chevron-left"></i> 深入了解MySQL的online DDL
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5%E4%BA%8E%E8%AE%BE%E8%AE%A1/CAP%E5%AE%9A%E7%90%86%E5%92%8C%E5%BD%93%E5%89%8D%E8%BD%AF%E4%BB%B6%E7%9A%84CPA%E7%9A%84%E5%AE%9E%E7%8E%B0/" rel="next" title="CAP 定理和当前软件的 CPA 的实现">
+                  CAP 定理和当前软件的 CPA 的实现 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
