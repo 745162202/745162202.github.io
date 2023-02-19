@@ -128,7 +128,7 @@
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
   </nav>
@@ -145,74 +145,6 @@
     </div>
 
     <div class="main-inner index posts-expand">
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/Untitled/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="mzl">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="mzl-技术分享">
-      <meta itemprop="description" content="技术分享">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | mzl-技术分享">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/Untitled/" class="post-title-link" itemprop="url">未命名</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2023-02-12 16:16:06" itemprop="dateCreated datePublished" datetime="2023-02-12T16:16:06+08:00">2023-02-12</time>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
 
     
 
@@ -240,7 +172,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/linux/%E4%BA%86%E8%A7%A3%E7%A1%AC%E4%BB%B6%E4%B8%AD%E6%96%AD%E5%92%8C%E8%BD%AF%E4%BB%B6%E4%B8%AD%E6%96%AD/" class="post-title-link" itemprop="url">未命名</a>
+          <a href="/linux/%E4%BA%86%E8%A7%A3%E7%A1%AC%E4%BB%B6%E4%B8%AD%E6%96%AD%E5%92%8C%E8%BD%AF%E4%BB%B6%E4%B8%AD%E6%96%AD/" class="post-title-link" itemprop="url">了解硬件中断和软件中断</a>
         </h2>
 
         <div class="post-meta-container">
@@ -251,7 +183,16 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2023-02-12 13:24:14" itemprop="dateCreated datePublished" datetime="2023-02-12T13:24:14+08:00">2023-02-12</time>
+      <time title="创建时间：2023-02-19 00:00:00" itemprop="dateCreated datePublished" datetime="2023-02-19T00:00:00+08:00">2023-02-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+        </span>
     </span>
 
   
@@ -264,7 +205,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="了解硬件中断和软件中断"><a href="#了解硬件中断和软件中断" class="headerlink" title="了解硬件中断和软件中断"></a>了解硬件中断和软件中断</h2><p><code>Linux</code> 中很多工具在 <code>Docker</code> 的环境中 <code>CPU</code> 利用率的计算都是不准确的，笔者再看 <code>CGroup</code> 文件的时候看到 <code>CPU</code> 利用率中有硬件中断，软中断的占 <code>CPU</code>  利用率的时间。笔者对 <code>CPU</code>硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。</p>
+          <p><code>Linux</code> 中很多工具在 <code>Docker</code> 的环境中 <code>CPU</code> 利用率的计算都是不准确的，笔者再看 <code>CGroup</code> 文件的时候看到 <code>CPU</code> 利用率中有硬件中断，软中断的占 <code>CPU</code>  利用率的时间。笔者对 <code>CPU</code>硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。</p>
 <p>带着问题学习，看完这篇文章你会学到：</p>
 <ol>
 <li>什么是硬件中断？为什么会有时钟中断？</li>
@@ -328,6 +269,74 @@
 <h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><p>《操作系统导论》</p>
 <p>[了解 Linux 内核]<a target="_blank" rel="noopener" href="https://waynerv.com/posts/how-linux-process-input-frames/#">https://waynerv.com/posts/how-linux-process-input-frames/#</a>)</p>
 
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/Untitled/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/Untitled/" class="post-title-link" itemprop="url">未命名</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-02-12 16:16:06" itemprop="dateCreated datePublished" datetime="2023-02-12T16:16:06+08:00">2023-02-12</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          
       
     </div>
 
