@@ -19,18 +19,18 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="Linux 中很多工具在 Docker 的环境中 CPU 利用率的计算都是不准确的，笔者再看 CGroup 文件的时候看到 CPU 利用率中有硬件中断，软中断的占 CPU  利用率的时间。笔者对 CPU硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。 带着问">
+    <meta name="description" content="Linux 中很多工具在 Docker 的环境中 CPU 利用率的计算都是不准确的，笔者再看 CGroup 文件的时候看到 CPU 利用率中有硬件中断，软中断的占 CPU  利用率的时间。笔者对 CPU硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="了解硬件中断和软件中断">
 <meta property="og:url" content="https://745162202.github.io/linux/%E4%BA%86%E8%A7%A3%E7%A1%AC%E4%BB%B6%E4%B8%AD%E6%96%AD%E5%92%8C%E8%BD%AF%E4%BB%B6%E4%B8%AD%E6%96%AD/index.html">
 <meta property="og:site_name" content="mzl-技术分享">
-<meta property="og:description" content="Linux 中很多工具在 Docker 的环境中 CPU 利用率的计算都是不准确的，笔者再看 CGroup 文件的时候看到 CPU 利用率中有硬件中断，软中断的占 CPU  利用率的时间。笔者对 CPU硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。 带着问">
+<meta property="og:description" content="Linux 中很多工具在 Docker 的环境中 CPU 利用率的计算都是不准确的，笔者再看 CGroup 文件的时候看到 CPU 利用率中有硬件中断，软中断的占 CPU  利用率的时间。笔者对 CPU硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230214214455079.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230214214710331.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230219223211609.png">
 <meta property="article:published_time" content="2023-02-18T16:00:00.000Z">
-<meta property="article:modified_time" content="2023-02-19T14:36:11.571Z">
+<meta property="article:modified_time" content="2023-02-19T14:38:35.023Z">
 <meta property="article:author" content="mzl">
 <meta property="article:tag" content="java k8s 大数据">
 <meta name="twitter:card" content="summary">
@@ -129,7 +129,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">20</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -221,6 +221,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <p><code>Linux</code> 中很多工具在 <code>Docker</code> 的环境中 <code>CPU</code> 利用率的计算都是不准确的，笔者再看 <code>CGroup</code> 文件的时候看到 <code>CPU</code> 利用率中有硬件中断，软中断的占 <code>CPU</code>  利用率的时间。笔者对 <code>CPU</code>硬件中断还是了解的但是不能很完整的表达，但是软件中断还是第一次听说，所以有了本篇文章。本文将从初学者角度讲解硬件中断和软件中断的基础知识最后会通过一个网络中断来贯通硬件中断和软件中断的关系。</p>
+<span id="more"></span>
+
 <p>带着问题学习，看完这篇文章你会学到：</p>
 <ol>
 <li>什么是硬件中断？为什么会有时钟中断？</li>
@@ -296,8 +298,8 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/Untitled/" rel="prev" title="">
-                  <i class="fa fa-chevron-left"></i> 
+                <a href="/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/" rel="prev" title="ES Lucene marge和 forceMerge 详解">
+                  <i class="fa fa-chevron-left"></i> ES Lucene marge和 forceMerge 详解
                 </a>
             </div>
             <div class="post-nav-item">
