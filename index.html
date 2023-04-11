@@ -154,7 +154,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/elasticsearch/ES%20%E9%92%88%E5%AF%B9shard%E6%95%B0%E9%87%8F%E8%BF%87%E5%A4%9A%E7%9A%84%E9%99%90%E5%88%B6%E6%96%B9%E6%A1%88%E8%AF%A6%E8%A7%A3/">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/elasticsearch/ES%E9%92%88%E5%AF%B9shard%E6%95%B0%E9%87%8F%E8%BF%87%E5%A4%9A%E7%9A%84%E9%99%90%E5%88%B6%E6%96%B9%E6%A1%88%E8%AF%A6%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -172,7 +172,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/elasticsearch/ES%20%E9%92%88%E5%AF%B9shard%E6%95%B0%E9%87%8F%E8%BF%87%E5%A4%9A%E7%9A%84%E9%99%90%E5%88%B6%E6%96%B9%E6%A1%88%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">未命名</a>
+          <a href="/elasticsearch/ES%E9%92%88%E5%AF%B9shard%E6%95%B0%E9%87%8F%E8%BF%87%E5%A4%9A%E7%9A%84%E9%99%90%E5%88%B6%E6%96%B9%E6%A1%88%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">ES 针对 shard 数量过多的限制方案详解</a>
         </h2>
 
         <div class="post-meta-container">
@@ -183,7 +183,16 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2023-03-28 21:37:42" itemprop="dateCreated datePublished" datetime="2023-03-28T21:37:42+08:00">2023-03-28</time>
+      <time title="创建时间：2023-04-23 00:00:00" itemprop="dateCreated datePublished" datetime="2023-04-23T00:00:00+08:00">2023-04-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/elasticsearch/" itemprop="url" rel="index"><span itemprop="name">elasticsearch</span></a>
+        </span>
     </span>
 
   
@@ -205,36 +214,16 @@
 </li>
 <li><p>如果开启自动创建索引，索引创建速度慢可能会导致大量的写请求堆积在内存中可能导致集群崩溃。</p>
 <p><strong>该集群就出现创建索引超时并且慢查询数量也在增加。</strong></p>
-<p>其实在不合理使用<code>ES</code>集群中这种多<code>shard</code> 问题还是比较常见，刚开始盲目增加 <code>shard</code> 数量来提高性能或者使用默认的<code>shard</code>数量创建索引（6.3默认主shard数是5并分配1个副本），索引不使用后也不去缩小<code>shard</code>或删除索引最终导致集群不稳定，所以我们这篇文章带大家看看 <code>ES</code> 源码中这里问题的解决方案。</p>
 </li>
 </ol>
-<h2 id="Elasticsearch-解决多shard-数量设计方案"><a href="#Elasticsearch-解决多shard-数量设计方案" class="headerlink" title="Elasticsearch 解决多shard 数量设计方案"></a>Elasticsearch 解决多<code>shard</code> 数量设计方案</h2><p>​      <code>ES</code>官方也发现用户使用集群时随意创建索引 <code>shard</code> 导致集群不稳定问题，通过两个分案来解决这个问题。</p>
-<ol>
-<li><p>在<code>v7.0.0</code>开始，主 <code>shard</code> 默认数量为<code>1</code>。</p>
-</li>
-<li><p>在<code>v6.5.0</code>、 <code>v7.0.0-beta1</code>版本开始就增加了在创建索引的时候最大分片数量的检查能力<code>max_shards_per_node</code> 此设置将在创建索引、恢复快照、打开索引等用户操作时进行检查。如果集群中的分片总数大于<code>max_shards_per_node * data_node_number</code>则可以拒绝创建索引操作。在<code>v6.5.0</code>版本默认打印警告日志，需要通过设置一个环境变量来开启拒绝创建索引操作 （es.enforce_max_shards_per_node: true）。从 <code>v7.0.0-beta1</code> 强制开启且超出后访问创建 <code>Api</code> 会返回创建错误的报错信息。详见下方 <code>Github</code> 链接：</p>
-</li>
-</ol>
-<p><a target="_blank" rel="noopener" href="https://github.com/elastic/elasticsearch/pull/34021">#34021</a></p>
-<p>添加集群分片限制的警告，通过 <code>es.enforce_max_shards_per_node:true</code> 开启超过后拒绝创建索引操作功能，<code>max_shards_per_node</code> 默认每个节点 <code>1000</code> 个，从<code>v6.5.0</code>、 <code>v7.0.0-beta1</code> 开始支持</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/elastic/elasticsearch/pull/34892/files">#34892</a>、<a target="_blank" rel="noopener" href="https://github.com/elastic/elasticsearch/pull/36968">#36968</a></p>
-<p>删除系统属性 <code>es.enforce_max_shards_per_node</code>，并且开始强制报错，影响 <code>v7.0.0-beta1</code> 之后的版本</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/elastic/elasticsearch/pull/44619">#44619</a></p>
-<p>修复问题需要在索引模板应用后才开始检查最大分片数量，修复版本<code>v6.8.3</code>、<code>v7.2.1</code>、<code>v7.3.0</code>、<code>v7.4.0</code>、<code>v8.0.0-alpha1</code></p>
-<p><a target="_blank" rel="noopener" href="https://github.com/elastic/elasticsearch/pull/57234">#57234</a></p>
-<p>实现方式重构改造影响<code>v7.9.0</code>  <code>v8.0.0-alpha1</code> 之后的版本</p>
-<p>7.10版本代码非常的简单， <code>checkShardLimit</code> 代码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ShardLimitValidator</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Setting&lt;Integer&gt; SETTING_CLUSTER_MAX_SHARDS_PER_NODE =</span><br><span class="line">        Setting.intSetting(<span class="string">&quot;cluster.max_shards_per_node&quot;</span>, <span class="number">1000</span>, <span class="number">1</span>, Setting.Property.Dynamic, Setting.Property.NodeScope);</span><br><span class="line">        <span class="keyword">protected</span> <span class="keyword">final</span> <span class="type">AtomicInteger</span> <span class="variable">shardLimitPerNode</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicInteger</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">ShardLimitValidator</span><span class="params">(<span class="keyword">final</span> Settings settings, ClusterService clusterService)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.shardLimitPerNode.set(SETTING_CLUSTER_MAX_SHARDS_PER_NODE.get(settings));</span><br><span class="line">        clusterService.getClusterSettings().addSettingsUpdateConsumer(SETTING_CLUSTER_MAX_SHARDS_PER_NODE, <span class="built_in">this</span>::setShardLimitPerNode);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">setShardLimitPerNode</span><span class="params">(<span class="type">int</span> newValue)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.shardLimitPerNode.set(newValue);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">     <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Gets the currently configured value of the &#123;<span class="doctag">@link</span> ShardLimitValidator#SETTING_CLUSTER_MAX_SHARDS_PER_NODE&#125; setting.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> the current value of the setting</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getShardLimitPerNode</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> shardLimitPerNode.get();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">     <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Checks to see if an operation can be performed without taking the cluster over the cluster-wide shard limit.</span></span><br><span class="line"><span class="comment">     * Returns an error message if appropriate, or an empty &#123;<span class="doctag">@link</span> Optional&#125; otherwise.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> newShards         The number of shards to be added by this operation</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> state             The current cluster state</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> If present, an error message to be given as the reason for failing</span></span><br><span class="line"><span class="comment">     * an operation. If empty, a sign that the operation is valid.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> Optional&lt;String&gt; <span class="title function_">checkShardLimit</span><span class="params">(<span class="type">int</span> newShards, ClusterState state)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> checkShardLimit(newShards, state, getShardLimitPerNode());</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// package-private for testing</span></span><br><span class="line">    <span class="keyword">static</span> Optional&lt;String&gt; <span class="title function_">checkShardLimit</span><span class="params">(<span class="type">int</span> newShards, ClusterState state, <span class="type">int</span> maxShardsPerNodeSetting)</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">nodeCount</span> <span class="operator">=</span> state.getNodes().getDataNodes().size();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Only enforce the shard limit if we have at least one data node, so that we don&#x27;t block</span></span><br><span class="line">        <span class="comment">// index creation during cluster setup</span></span><br><span class="line">        <span class="keyword">if</span> (nodeCount == <span class="number">0</span> || newShards &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> Optional.empty();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">int</span> <span class="variable">maxShardsPerNode</span> <span class="operator">=</span> maxShardsPerNodeSetting;</span><br><span class="line">        <span class="type">int</span> <span class="variable">maxShardsInCluster</span> <span class="operator">=</span> maxShardsPerNode * nodeCount;</span><br><span class="line">        <span class="type">int</span> <span class="variable">currentOpenShards</span> <span class="operator">=</span> state.getMetadata().getTotalOpenIndexShards();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> ((currentOpenShards + newShards) &gt; maxShardsInCluster) &#123;</span><br><span class="line">            <span class="type">String</span> <span class="variable">errorMessage</span> <span class="operator">=</span> <span class="string">&quot;this action would add [&quot;</span> + newShards + <span class="string">&quot;] total shards, but this cluster currently has [&quot;</span> +</span><br><span class="line">                currentOpenShards + <span class="string">&quot;]/[&quot;</span> + maxShardsInCluster + <span class="string">&quot;] maximum shards open&quot;</span>;</span><br><span class="line">            <span class="keyword">return</span> Optional.of(errorMessage);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> Optional.empty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-
-
-<h2 id="谈谈限制索引数量方案的设计"><a href="#谈谈限制索引数量方案的设计" class="headerlink" title="谈谈限制索引数量方案的设计"></a>谈谈限制索引数量方案的设计</h2><p>​      <code>max shards</code> 默认值是<code>1000</code>与节点数量相乘，这个方案通过简单的方式做到有效控制了分片数量解决根本的问题并且也可以灵活调整 <code>max shards</code> 的大小，但是没有考虑到 <code>master</code> 堆内存的大小对分片数量的影响和<code>data</code>堆内存对分片的影响，如果用户使用不太了解情况下创建的<code>专有master</code>的规格比较小还是会导致 master 压力过大。</p>
-<p>​      <code>ES</code>也对<code>专有master</code>堆大小和索引数量的关系做经验的总结，<code>专有 master</code> 每 <code>GB</code> 堆的索引应该少于 <code>3000</code> 个。如 <code>专有master</code> 堆大小为<code>4GB</code>，那么创建的索引应该少于 <code>12000</code> 个索引。针对数据节点可以容纳的分片数量和字段映射也与节点的堆内存成正比，每个索引的每个映射字段大约需要 <code>1kB</code> 的堆开销。还需要 <code>0.5GB</code> 的额外堆满足 <code>elasticsearch</code> 的工作负载（如索引、搜索和聚合）。如果一个数据节点存在<code> 1000 shard</code> ，每个 <code>shard</code> 包含 <code>4000</code> 个映射字段，那么您应该允许大约 <code>1000 × 4000 × 1kB = 4GB</code> 的堆用于这些字段，另外 <code>0.5GB</code> 的堆用于其工作负载和其他开销，并且因此该节点将需要至少 <code>4.5GB</code> 的堆大小。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/elasticsearch/reference/8.2/size-your-shards.html#shard-count-recommendation">ElasticSearch文档8.2版本-调整 shard 大小</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.elastic.co/cn/blog/how-many-shards-should-i-have-in-my-elasticsearch-cluster">我在 Elasticsearch 集群内应该设置多少个分片</a><br>#20705 </p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/elasticsearch/ES%E9%92%88%E5%AF%B9shard%E6%95%B0%E9%87%8F%E8%BF%87%E5%A4%9A%E7%9A%84%E9%99%90%E5%88%B6%E6%96%B9%E6%A1%88%E8%AF%A6%E8%A7%A3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
