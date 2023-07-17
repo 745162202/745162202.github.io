@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="​     为什么结果内存和CPU速度不匹配的问题，现代 CPU 都采用了三级缓存的架构。每个核都有自己私有的L1与L2缓存。但是你有没有想过在并发编程中另一个CPU需要访问并修改当前CPU缓存中的数据怎么办呢？如何保证数据的一致性呢？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java 并发编程容易被忽视的伪共享问题与解决方案">
+<meta property="og:url" content="https://745162202.github.io/java/java%E4%B8%AD%E7%9A%84%E4%BC%AA%E5%85%B1%E4%BA%AB/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="​     为什么结果内存和CPU速度不匹配的问题，现代 CPU 都采用了三级缓存的架构。每个核都有自己私有的L1与L2缓存。但是你有没有想过在并发编程中另一个CPU需要访问并修改当前CPU缓存中的数据怎么办呢？如何保证数据的一致性呢？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230715184405805.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/745162202/image/master/img/yuque_diagram.jpg">
+<meta property="article:published_time" content="2023-07-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-07-17T16:50:38.261Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/745162202/image/master/img/image-20230715184405805.png">
+
+
+<link rel="canonical" href="https://745162202.github.io/java/java%E4%B8%AD%E7%9A%84%E4%BC%AA%E5%85%B1%E4%BA%AB/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/java/java%E4%B8%AD%E7%9A%84%E4%BC%AA%E5%85%B1%E4%BA%AB/","path":"java/java中的伪共享/","title":"Java 并发编程容易被忽视的伪共享问题与解决方案"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Java 并发编程容易被忽视的伪共享问题与解决方案 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C%EF%BC%88cache-line%EF%BC%89"><span class="nav-number">1.</span> <span class="nav-text">缓存行（cache line）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%AA%E5%85%B1%E4%BA%AB"><span class="nav-number">2.</span> <span class="nav-text">伪共享</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C%E5%A1%AB%E5%85%85%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">缓存行填充方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JDK15%E5%89%8D"><span class="nav-number">3.1.</span> <span class="nav-text">JDK15前</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JDK-15%E5%90%8E"><span class="nav-number">3.2.</span> <span class="nav-text">JDK 15后</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%EF%BC%9A%E7%9B%B8%E9%82%BB%E8%A1%8C%E7%BC%93%E5%AD%98%EF%BC%88Adjacent-Cache-Line-Prefetch%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">扩展：相邻行缓存（Adjacent Cache-Line Prefetch）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-number">5.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/java/java%E4%B8%AD%E7%9A%84%E4%BC%AA%E5%85%B1%E4%BA%AB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Java 并发编程容易被忽视的伪共享问题与解决方案 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Java 并发编程容易被忽视的伪共享问题与解决方案
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-07-10 00:00:00" itemprop="dateCreated datePublished" datetime="2023-07-10T00:00:00+08:00">2023-07-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>​     为什么结果内存和<code>CPU</code>速度不匹配的问题，现代 <code>CPU</code> 都采用了三级缓存的架构。每个核都有自己私有的<code>L1</code>与<code>L2</code>缓存。但是你有没有想过在并发编程中另一个<code>CPU</code>需要访问并修改当前<code>CPU</code>缓存中的数据怎么办呢？如何保证数据的一致性呢？</p>
+ <span id="more"></span>
+
+<p>​    这就是<code>MESI</code>协议做的事情，<code>MESI</code> 代表了 <code>MESI协议</code>的四个状态，下面简单介绍下。</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M 修改 (Modified)</td>
+<td>缓存行（cache line）被修改与内存中数据不一致，对需要对其他持有的数据的CPU 发送失效消息</td>
+</tr>
+<tr>
+<td>E 独占 (Exclusive)</td>
+<td>缓存行被单个CPU 使用中，其他CPU没有这</td>
+</tr>
+<tr>
+<td>S 共享 (Shared)</td>
+<td>缓存行被多个CPU 使用中，并没有修改</td>
+</tr>
+<tr>
+<td>I 无效 (Invalid)</td>
+<td>缓存行已经被修改当前缓存行数据属于脏数据，如果需要使用还要去下次缓存中读取最小数据。</td>
+</tr>
+</tbody></table>
+<p>​    缓存行的简单状态流转流程：第一次加载到缓存行<code>CPU</code> 会把缓存行标注为独占，当<code>CPU</code>发现总线上有另一个<code>CPU</code>需要同一块缓存数据会把这个数据标记为共享，当其中一个<code>CPU</code>对这块数据信息修改那么它需要通知其他使用这块缓存行的<code>CPU</code>缓存行无效。</p>
+<h2 id="缓存行（cache-line）"><a href="#缓存行（cache-line）" class="headerlink" title="缓存行（cache line）"></a>缓存行（cache line）</h2><p>​    <code>CPU</code>的 <code>Cache Line</code> 的设计是局部性原理的体现，希望通过局部性原理来减少和主内存的交互提高<code>CPU</code>性能。</p>
+<p>​    局部性原理：当程序访问数据时存在着空间布局性和时间布局性，空间布局性指的是程序某一个时间访问相邻的内存地址，时间布局性指的时程序在某个时间段内会多次访问同一块内存地址。</p>
+<p>​    简单理解就是：时间局部性指的是程序中的某条指令被执行后续这条指令很可能再次被执行读取同一块内存地址。空间局部性是指某块内存一旦被访问后续附近的内存也很大概率再次被访问（数据结构）。</p>
+<h2 id="伪共享"><a href="#伪共享" class="headerlink" title="伪共享"></a>伪共享</h2><p>​    了解了<code>MESI</code>协议，我们知道现代<code>CPU</code>使用了缓存行。那么在<code>JDK</code>中的内存布局会把相邻的成员变量是在一起的可能被加载到同一个缓存行中，如果多线程对这些不同的成员变量频繁进行修改就会造成激烈的竞争可能严重影响代码执行速度，这就是<code>CPU架构</code>下的伪共享问题。</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/image-20230715184405805.png" alt="image-20230715184405805"></p>
+<center>
+    图片来源 : Avoiding and Identifying False Sharing Among Threads <br/>
+    当不同处理器上的线程修改缓存行数据就发生了错误的共享，为了保证数据一致性这块缓存行无效需要强制更新到内存中，另一个线程需要重新从内存中读取。
+</center>
+
+<p>​    那么伪共享如何解决呢？</p>
+<ol>
+<li>使用缓存行填充技术</li>
+<li>拆分数据结构，不要让频繁修改的变量放在一个数据结构中</li>
+<li>不使用或者少使用共享变量</li>
+</ol>
+<p>2、3两条需要开发中自觉遵守，当一定存在这种问题那么可以使用缓存行填充技术。我来看下<code>Java</code>里面性能著称<code>Disruptor高性能队列</code> 的缓存行填充方案。</p>
+<h2 id="缓存行填充方案"><a href="#缓存行填充方案" class="headerlink" title="缓存行填充方案"></a>缓存行填充方案</h2><h3 id="JDK15前"><a href="#JDK15前" class="headerlink" title="JDK15前"></a>JDK15前</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">LhsPadding</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="type">long</span> p1, p2, p3, p4, p5, p6, p7;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Value</span> <span class="keyword">extends</span> <span class="title class_">LhsPadding</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">volatile</span> <span class="type">long</span> value;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RhsPadding</span> <span class="keyword">extends</span> <span class="title class_">Value</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="type">long</span> p9, p10, p11, p12, p13, p14, p15;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>LhsPadding 防止前面的伪共享，RhsPadding 防止后面的伪共享。在缓存行为 64 字节中，最差就时需要的变更的值在缓存行的最左边或者最右边。</p>
+<p><img src="https://raw.githubusercontent.com/745162202/image/master/img/yuque_diagram.jpg" alt="yuque_diagram"></p>
+<h3 id="JDK-15后"><a href="#JDK-15后" class="headerlink" title="JDK 15后"></a>JDK 15后</h3><p>​    数据填充方案是强依赖<code>JDK</code>的内存布局的在<code>JDK15</code>修改了<code>HotSpot</code>内存布局 <a target="_blank" rel="noopener" href="https://bugs.openjdk.java.net/browse/JDK-8237767">Field layout computation overhaul</a>，**<code>long</code>它们不适合任何类型的对齐/填充间隙**。如果<code>value</code>是较小的数据类型，即<code>int</code>而不是<code>long</code>在 <code>JDK15</code> 的 <code>HotSpot</code>  将看到不符合预期的结果, <code>long</code> 不会包裹 <code>int</code> 类型的 <code>Value</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">$ ~/.jdks/azul-15.0.1/bin/java -Djol.tryWithSudo=true -jar jol-cli.jar internals -cp build/classes/java/main com.lmax.disruptor.Sequence</span><br><span class="line"># WARNING: Unable to attach Serviceability Agent. sun.jvm.hotspot.memory.Universe.getNarrowOopBase()</span><br><span class="line"># Running 64-bit HotSpot VM.</span><br><span class="line"># Using compressed oop with 3-bit shift.</span><br><span class="line"># Using compressed klass with 3-bit shift.</span><br><span class="line"># WARNING | Compressed references base/shifts are guessed by the experiment!</span><br><span class="line"># WARNING | Therefore, computed addresses are just guesses, and ARE NOT RELIABLE.</span><br><span class="line"># WARNING | Make sure to attach Serviceability Agent to get the reliable addresses.</span><br><span class="line"># Objects are 8 bytes aligned.</span><br><span class="line"># Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]</span><br><span class="line"># Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]</span><br><span class="line"></span><br><span class="line">Instantiated the sample instance via default constructor.</span><br><span class="line"></span><br><span class="line">com.lmax.disruptor.Sequence object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0     4        (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)</span><br><span class="line">      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)</span><br><span class="line">      8     4        (object header)                           08 c1 17 00 (00001000 11000001 00010111 00000000) (1556744)</span><br><span class="line">     12     4    int Value.value                               -1</span><br><span class="line">     16     8   long LhsPadding.p1                             0</span><br><span class="line">     24     8   long LhsPadding.p2                             0</span><br><span class="line">     32     8   long LhsPadding.p3                             0</span><br><span class="line">     40     8   long LhsPadding.p4                             0</span><br><span class="line">     48     8   long LhsPadding.p5                             0</span><br><span class="line">     56     8   long LhsPadding.p6                             0</span><br><span class="line">     64     8   long LhsPadding.p7                             0</span><br><span class="line">     72     8   long RhsPadding.p9                             0</span><br><span class="line">     80     8   long RhsPadding.p10                            0</span><br><span class="line">     88     8   long RhsPadding.p11                            0</span><br><span class="line">     96     8   long RhsPadding.p12                            0</span><br><span class="line">    104     8   long RhsPadding.p13                            0</span><br><span class="line">    112     8   long RhsPadding.p14                            0</span><br><span class="line">    120     8   long RhsPadding.p15                            0</span><br><span class="line">Instance size: 128 bytes</span><br><span class="line">Space losses: 0 bytes internal + 0 bytes external = 0 bytes total</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>Disruptor高性能队列</code>也修改了缓存行填充方案<a target="_blank" rel="noopener" href="https://github.com/LMAX-Exchange/disruptor/pull/352">#352</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">class LhsPadding</span><br><span class="line">&#123;</span><br><span class="line">    protected byte</span><br><span class="line">        p10, p11, p12, p13, p14, p15, p16, p17,</span><br><span class="line">        p20, p21, p22, p23, p24, p25, p26, p27,</span><br><span class="line">        p30, p31, p32, p33, p34, p35, p36, p37,</span><br><span class="line">        p40, p41, p42, p43, p44, p45, p46, p47,</span><br><span class="line">        p50, p51, p52, p53, p54, p55, p56, p57,</span><br><span class="line">        p60, p61, p62, p63, p64, p65, p66, p67,</span><br><span class="line">        p70, p71, p72, p73, p74, p75, p76, p77;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Value extends LhsPadding</span><br><span class="line">&#123;</span><br><span class="line">    protected long value;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class RhsPadding extends Value</span><br><span class="line">&#123;</span><br><span class="line">    protected byte</span><br><span class="line">        p90, p91, p92, p93, p94, p95, p96, p97,</span><br><span class="line">        p100, p101, p102, p103, p104, p105, p106, p107,</span><br><span class="line">        p110, p111, p112, p113, p114, p115, p116, p117,</span><br><span class="line">        p120, p121, p122, p123, p124, p125, p126, p127,</span><br><span class="line">        p130, p131, p132, p133, p134, p135, p136, p137,</span><br><span class="line">        p140, p141, p142, p143, p144, p145, p146, p147,</span><br><span class="line">        p150, p151, p152, p153, p154, p155, p156, p157;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="扩展：相邻行缓存（Adjacent-Cache-Line-Prefetch）"><a href="#扩展：相邻行缓存（Adjacent-Cache-Line-Prefetch）" class="headerlink" title="扩展：相邻行缓存（Adjacent Cache-Line Prefetch）"></a>扩展：相邻行缓存（Adjacent Cache-Line Prefetch）</h2><p>  当代 <code>CPU</code> 架构基本都支持开启相邻行缓存，开启后<code>L1</code>的缓存行就会增大 <code>1倍</code>变为 <code>128 字节</code>。那么 <code>Disruptor高性能队列</code>是否需要提高填充<code>128字节</code>来继续保持独占整个缓存行呢？这里是比较争议的，Disruptor issue <a target="_blank" rel="noopener" href="https://github.com/LMAX-Exchange/disruptor/pull/352">#344</a> 里面讨论了这个问题，最后结果是开启相邻行缓存填充为<code>128字节</code>和 填充为<code>64字节</code>无明显变化。<code>CPU</code> 缓存资源是昂贵的最终不对此项进行修改。但是这里要介绍另一个款工具  <code>JCTools</code>被<code>Netty</code>引用，它就是采用填充<code>128字节</code>的方案。那么到底是填充为<code>128字节</code>还是填充为<code>64</code>就是仁者见仁智者见智。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p>Intel 并发编程指南中的一篇文章：<a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/develop/external/us/en/documents/3-4-memmgt-avoiding-and-identifying-false-sharing-among-threads-698008.pdf">Avoiding and Identifying False Sharing Among Threads</a></p>
+<p> <a target="_blank" rel="noopener" href="https://bugs.openjdk.java.net/browse/JDK-8237767">Field layout computation overhaul</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/book/%E7%A8%8B%E5%BA%8F%E6%98%AF%E6%80%8E%E4%B9%88%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84/" rel="prev" title="程序是怎么跑起来的">
+                  <i class="fa fa-chevron-left"></i> 程序是怎么跑起来的
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
