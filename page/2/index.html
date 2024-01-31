@@ -122,13 +122,13 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
   </nav>
@@ -145,6 +145,91 @@
     </div>
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">ES Lucene marge和 forceMerge 详解</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-12-10 00:00:00" itemprop="dateCreated datePublished" datetime="2022-12-10T00:00:00+08:00">2022-12-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/elasticsearch/" itemprop="url" rel="index"><span itemprop="name">elasticsearch</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><code>Lucene</code>的机制当内存中有数据的情况下，每 <code>1s</code> 生成一个<code>segment</code>。当<code>segment</code>生成后这个数据就可以被检索到了,<code>segment</code>增多会导致占用文件句柄增加，消耗大量资源，<code>Lucene</code>通过把<code>segment</code>合并来解决这个问题。<code>Lucene</code>通常有三种类型的合并：自动的合并<code>naturalMerge(下文称为 Merge)</code>、手动的<code>forceMerge</code>和<code>forceMergeDeletes</code>。<code>merge</code>是<code>ES</code>为了提升查询性能、回收已经被删除的<code>doc</code>，在后台定期调度的<code>merge</code>操作。对索引的任何增删改操作都有可能触发<code>merge</code>。而<code>forceMerge</code>手动触发的<code>merge</code>操作，目的是减少 <code>segment</code> 数量和回收已经被删除的 <code>doc</code>，提升查询性能，<code>forceMerge</code>比较暴力最好是在索引为只读状态后使用。<code>forceMergeDeletes</code>合并存在删除的内容占10%以上的<code>segment</code>。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/elasticsearch/ESLucene%20marge%E5%92%8CforceMerge%20%E8%AF%A6%E8%A7%A3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -577,94 +662,8 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/k8s/%E8%AE%B0%E5%BD%95%E8%B8%A9%E5%9D%91-OpenJDK%20%E8%8E%B7%E5%8F%96%E8%BF%9B%E7%A8%8BCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E4%B8%8D%E5%87%86%E9%97%AE%E9%A2%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="mzl">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="mzl-技术分享">
-      <meta itemprop="description" content="技术分享">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | mzl-技术分享">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/k8s/%E8%AE%B0%E5%BD%95%E8%B8%A9%E5%9D%91-OpenJDK%20%E8%8E%B7%E5%8F%96%E8%BF%9B%E7%A8%8BCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E4%B8%8D%E5%87%86%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">记录踩坑-OpenJDK 获取进程CPU使用率不准问题</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2022-05-08 00:00:00" itemprop="dateCreated datePublished" datetime="2022-05-08T00:00:00+08:00">2022-05-08</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/elasticsearch/" itemprop="url" rel="index"><span itemprop="name">elasticsearch</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h3 id="0-背景"><a href="#0-背景" class="headerlink" title="0.背景"></a>0.背景</h3><p>​    k8s 下运行 ElastcSearch， 通过 ElastcSearch API 获取 ElastcSearch进程 CPU 使用率，它获取的确是宿主机下的该容器中 ElastcSearch 进程 CPU 使用率导致监控不准。</p>
-<p>下图宿主机 CPU 为4核，ElastcSearch 镜像进程 CPU 100%，但是 getProcessCpuLoad 获取确实 25%左右。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/k8s/%E8%AE%B0%E5%BD%95%E8%B8%A9%E5%9D%91-OpenJDK%20%E8%8E%B7%E5%8F%96%E8%BF%9B%E7%A8%8BCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E4%B8%8D%E5%87%86%E9%97%AE%E9%A2%98/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
-    <a class="extend prev" rel="prev" title="上一页" aria-label="上一页" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" title="下一页" aria-label="下一页" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" title="上一页" aria-label="上一页" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" title="下一页" aria-label="下一页" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 </div>
@@ -676,7 +675,7 @@
 
 <div class="copyright">
   &copy; 2019 – 
-  <span itemprop="copyrightYear">2023</span>
+  <span itemprop="copyrightYear">2024</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

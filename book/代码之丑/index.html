@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha256-Z1K5uhUaJXA7Ll0XrZ/0JhX4lAtZFpT6jkKrEDT0drU=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"745162202.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.14.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近开始座地铁上下班，在地铁上重温下以前草草看过的书籍资料，重温每次会有不一样的感觉会有更多的自己的想法或者与作者共鸣。 长函数与方法内联　　长函数把多个业务处理流程放在一个函数里实现，把不同层面的细节放到一个函数里实现，让阅读这端代码的人望而却步。 　　长函数的原因主要使两个： 　　第一种把代码写成长函数原因是：长函数比较平铺直叙非常的直白把自己思考的一点点罗列出来，没有关注代码的分离。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="重温：代码之丑">
+<meta property="og:url" content="https://745162202.github.io/book/%E4%BB%A3%E7%A0%81%E4%B9%8B%E4%B8%91/index.html">
+<meta property="og:site_name" content="mzl-技术分享">
+<meta property="og:description" content="最近开始座地铁上下班，在地铁上重温下以前草草看过的书籍资料，重温每次会有不一样的感觉会有更多的自己的想法或者与作者共鸣。 长函数与方法内联　　长函数把多个业务处理流程放在一个函数里实现，把不同层面的细节放到一个函数里实现，让阅读这端代码的人望而却步。 　　长函数的原因主要使两个： 　　第一种把代码写成长函数原因是：长函数比较平铺直叙非常的直白把自己思考的一点点罗列出来，没有关注代码的分离。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-01-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-01-31T17:15:05.097Z">
+<meta property="article:author" content="mzl">
+<meta property="article:tag" content="java k8s 大数据">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://745162202.github.io/book/%E4%BB%A3%E7%A0%81%E4%B9%8B%E4%B8%91/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://745162202.github.io/book/%E4%BB%A3%E7%A0%81%E4%B9%8B%E4%B8%91/","path":"book/代码之丑/","title":"重温：代码之丑"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>重温：代码之丑 | mzl-技术分享</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">mzl-技术分享</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%95%BF%E5%87%BD%E6%95%B0%E4%B8%8E%E6%96%B9%E6%B3%95%E5%86%85%E8%81%94"><span class="nav-number">1.</span> <span class="nav-text">长函数与方法内联</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%95%BF%E5%8F%82%E6%95%B0%E5%88%97%E8%A1%A8"><span class="nav-number">2.</span> <span class="nav-text">长参数列表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E5%AF%B9%E8%B1%A1%E5%92%8C%E5%8F%AF%E5%8F%98%E6%95%B0%E6%8D%AE"><span class="nav-number">3.</span> <span class="nav-text">可变对象和可变数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%9D%E8%B5%96%E6%B7%B7%E4%B9%B1"><span class="nav-number">4.</span> <span class="nav-text">依赖混乱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E8%AF%84%E5%AE%A1"><span class="nav-number">5.</span> <span class="nav-text">代码评审</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">mzl</p>
+  <div class="site-description" itemprop="description">技术分享</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://745162202.github.io/book/%E4%BB%A3%E7%A0%81%E4%B9%8B%E4%B8%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="mzl">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="mzl-技术分享">
+      <meta itemprop="description" content="技术分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="重温：代码之丑 | mzl-技术分享">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          重温：代码之丑
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-02-01 00:00:00" itemprop="dateCreated datePublished" datetime="2024-02-01T00:00:00+08:00">2024-02-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">读书笔记　</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>　　最近开始座地铁上下班，在地铁上重温下以前草草看过的书籍资料，重温每次会有不一样的感觉会有更多的自己的想法或者与作者共鸣。</p>
+<h2 id="长函数与方法内联"><a href="#长函数与方法内联" class="headerlink" title="长函数与方法内联"></a>长函数与方法内联</h2><p>　　长函数把多个业务处理流程放在一个函数里实现，把不同层面的细节放到一个函数里实现，让阅读这端代码的人望而却步。</p>
+<p>　　长函数的原因主要使两个：</p>
+<p>　　第一种把代码写成长函数原因是：长函数比较平铺直叙非常的直白把自己思考的一点点罗列出来，没有关注代码的分离。</p>
+<p>　　另一种是因为觉得单个长函数性能好，把函数写长是为了获更好的性能。 是的每次调用方法可能涉及到压栈、寄存器中的值替换、指针需要指向被调用代码的第一行的地址再执行等操作浪费性能。确实这会导致一部分性能损失，但是代码的可维护性比性能优化要优先考虑（代码还是需要满足共识的编码规范），剩下就需要当前程序性能不足以满足需要时我们再来做相应的测量，找到焦点进行特定的优化。况且随着编译器越来越好，优化也越来越多<strong>，现代 JVM 都支持方法内联，把这些热点方法再 JVM 层面内联起来，使性能和长函数相似。</strong></p>
+ <span id="more"></span>
+
+<h2 id="长参数列表"><a href="#长参数列表" class="headerlink" title="长参数列表"></a><strong>长参数列表</strong></h2><p>　　很多人编写代码还会是大量长参数传递的模式，这会导致两个比较难搞的问题：</p>
+<ol>
+<li>不够聚合，比如某个参数需要增加前缀或者后缀，你需要去每个相关的地方修改</li>
+<li>业务逻辑修改增加了参数，可能导致多个地方的修改把新增的参数一步一步传递下去</li>
+</ol>
+<p>　　如果可以通过封装把<strong>参数封装成对象，</strong>那么对业务模型的变化修改起来很方便并且更加聚合加前缀等问题可以再模型中 get 方法中统一处理。</p>
+<p>还有一种文章中描述的<strong>动静分离</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">　　public void getChapters(final long bookId,</span><br><span class="line">　　                        final HttpClient httpClient,</span><br><span class="line">　　                        final ChapterProcessor processor) &#123;</span><br><span class="line"></span><br><span class="line">　　  HttpUriRequest request = createChapterRequest(bookId);</span><br><span class="line">　　  HttpResponse response = httpClient.execute(request);</span><br><span class="line">　　  List&lt;Chapter&gt; chapters = toChapters(response);</span><br><span class="line">　　  processor.process(chapters);</span><br><span class="line">　　&#125;</span><br></pre></td></tr></table></figure>
+
+<center>引用原文的例子</center>
+
+<p>　　这里表现出来的就是典型的动数据（bookId）和静数据（httpClient 和 processor），这些静数据可以考虑再类初始化的时候放入。</p>
+<h2 id="可变对象和可变数据"><a href="#可变对象和可变数据" class="headerlink" title="可变对象和可变数据"></a>可变对象和<strong>可变数据</strong></h2><p>　　可变的对象<strong>让它们变得不可控，对象中到处都是 set 方法再对象传递的过程中可以被任意修改，没有人可以确认当你使用的时候它是什么值。</strong>推荐默认不写 set 只有业务真的需要改变在加入对于的操作的方法。</p>
+<p>　　<strong>可变数据</strong>这个做到的应该很少数据通过 final 修饰它比可变对象好点但还是坏味道。</p>
+<h2 id="依赖混乱"><a href="#依赖混乱" class="headerlink" title="依赖混乱"></a><strong>依赖混乱</strong></h2><p>　　<strong>这章中的防腐层可以仔细品下虽然很多人都会犯这类问题。</strong>主要讲的就是关于 Controller DTO 是否可以在 Service 直接使用问题。总结就是不推荐，请求对象传导到业务代码中，造成了业务与外部接口的耦合，也就是业务依赖了一个外部通信协议。引入一个防腐层，将业务和外部通信协议隔离开来。</p>
+<h2 id="代码评审"><a href="#代码评审" class="headerlink" title="代码评审"></a><strong>代码评审</strong></h2><p>　　代码评审的过程是一个知识分享的过程，保证一些细节的知识不再是隐藏在某一个人的头脑中，而是放置到了团队的层面。代码评审也是尽早的暴露代码中问题，增加开发效率。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/elasticsearch/%E4%BA%86%E8%A7%A3ElasticSearch%E4%B8%AD%E7%9A%84Rest%E5%92%8CRPC/" rel="prev" title="了解 ElasticSearch 中的 Rest 和 RPC">
+                  <i class="fa fa-chevron-left"></i> 了解 ElasticSearch 中的 Rest 和 RPC
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mzl</span>
+</div>
+<div class="busuanzi-count">
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
